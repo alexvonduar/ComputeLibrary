@@ -62,8 +62,8 @@ Status CLDeconvolutionLayer::validate(const ITensorInfo *input, const ITensorInf
 
     const TensorShape output_shape = deconvolution_output_shape(out_dims, input->tensor_shape(), weights->tensor_shape());
 
-    ARM_COMPUTE_RETURN_ERROR_ON_MISMATCHING_DATA_TYPES(input, output, weights, bias);
-    ARM_COMPUTE_RETURN_ERROR_ON_MISMATCHING_FIXED_POINT(input, output, weights, bias);
+    ARM_COMPUTE_RETURN_ERROR_ON_MISMATCHING_DATA_TYPES(input, output, weights);
+    ARM_COMPUTE_RETURN_ERROR_ON_MISMATCHING_FIXED_POINT(input, output, weights);
 
     if(bias != nullptr)
     {
@@ -80,7 +80,7 @@ Status CLDeconvolutionLayer::validate(const ITensorInfo *input, const ITensorInf
     const PadStrideInfo conv_info(1, 1, 0, 0, 0, 0, DimensionRoundingType::CEIL);
 
     ARM_COMPUTE_RETURN_ON_ERROR(CLDeconvolutionLayerUpsample::validate(input, &scale_out_info, BorderSize(inner_border_right, inner_border_top), info));
-    ARM_COMPUTE_RETURN_ON_ERROR(CLConvolutionLayer::validate(&scale_out_info, weights, bias, output, info, WeightsInfo()));
+    ARM_COMPUTE_RETURN_ON_ERROR(CLConvolutionLayer::validate(&scale_out_info, weights, bias, output, conv_info, WeightsInfo()));
 
     return Status{};
 }
