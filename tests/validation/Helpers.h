@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,13 +128,14 @@ void fill_mask_from_pattern(uint8_t *mask, int cols, int rows, MatrixPattern pat
  */
 TensorShape calculate_depth_concatenate_shape(const std::vector<TensorShape> &input_shapes);
 
-/** Calculate output tensor shape give a vector of input tensor to concatenate
+/** Calculate output tensor shape for the concatenate operation along a given axis
  *
  * @param[in] input_shapes Shapes of the tensors to concatenate across width.
+ * @param[in] axis         Axis to use for the concatenate operation
  *
  * @return The shape of output concatenated tensor.
  */
-TensorShape calculate_width_concatenate_shape(const std::vector<TensorShape> &input_shapes);
+TensorShape calculate_concatenate_shape(const std::vector<TensorShape> &input_shapes, size_t axis);
 
 /** Parameters of Harris Corners algorithm. */
 struct HarrisCornersParameters
@@ -192,6 +193,25 @@ SimpleTensor<float> convert_from_asymmetric(const SimpleTensor<uint8_t> &src);
  * @return Quantized tensor.
  */
 SimpleTensor<uint8_t> convert_to_asymmetric(const SimpleTensor<float> &src, const QuantizationInfo &quantization_info);
+
+/** Convert quantized simple tensor into float using tensor quantization information.
+ *
+ * @param[in] src Quantized tensor.
+ *
+ * @return Float tensor.
+ */
+template <typename T>
+SimpleTensor<float> convert_from_symmetric(const SimpleTensor<T> &src);
+
+/** Convert float simple tensor into quantized using specified quantization information.
+ *
+ * @param[in] src               Float tensor.
+ * @param[in] quantization_info Quantification information.
+ *
+ * @return Quantized tensor.
+ */
+template <typename T>
+SimpleTensor<T> convert_to_symmetric(const SimpleTensor<float> &src, const QuantizationInfo &quantization_info);
 
 /** Matrix multiply between 2 float simple tensors
  *

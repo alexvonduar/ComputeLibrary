@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 ARM Limited.
+ * Copyright (c) 2018-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,11 @@ Size2D winograd_output_tile(const Size2D &input_dims, const Size2D &kernel_dims,
         output_tile = Size2D(kernel_dims.width == 1 ? 1U : 4U,
                              kernel_dims.height == 1 ? 1U : 4U);
     }
+    else if(kernel_max_dim == 7U)
+    {
+        output_tile = Size2D(kernel_dims.width == 1 ? 1U : 2U,
+                             kernel_dims.height == 1 ? 1U : 2U);
+    }
 
     return output_tile;
 }
@@ -73,7 +78,8 @@ bool check_support_fast_math(const Size2D &output_tile, const Size2D &kernel_siz
 
     std::vector<WinogradConfiguration> fast_math_winograd =
     {
-        WinogradConfiguration(std::pair<int, int>(4, 4), std::pair<int, int>(5, 5))
+        WinogradConfiguration(std::pair<int, int>(4, 4), std::pair<int, int>(5, 5)),
+        WinogradConfiguration(std::pair<int, int>(2, 2), std::pair<int, int>(7, 7))
     };
 
     auto p = std::make_pair(std::pair<int, int>(output_tile.width, output_tile.height),
@@ -152,6 +158,9 @@ Status CLWinogradConvolutionLayer::validate(const ITensorInfo *input, const ITen
     const Size2D kernel_size = Size2D(weights->tensor_shape()[idx_width], weights->tensor_shape()[idx_height]);
     const Size2D output_tile = winograd_output_tile(input_dims, kernel_size, input->data_layout());
 
+    ARM_COMPUTE_RETURN_ERROR_ON_MSG(((conv_info.pad_left() > (kernel_size.x() / 2u)) || (conv_info.pad_right() > (kernel_size.x() / 2u))), "Winograd only supports padding up to half kernel size");
+    ARM_COMPUTE_RETURN_ERROR_ON_MSG(((conv_info.pad_top() > (kernel_size.y() / 2u)) || (conv_info.pad_bottom() > (kernel_size.y() / 2u))), "Winograd only supports padding up to half kernel size");
+
     // Check if the Winograd configuration requires fast math
     if(!enable_fast_math)
     {
@@ -183,13 +192,7 @@ Status CLWinogradConvolutionLayer::validate(const ITensorInfo *input, const ITen
                                                                                                                      GEMMLowpOutputStageInfo(), (input->data_type() == DataType::F16))));
 
     // Configure output transform
-    ARM_COMPUTE_RETURN_ON_ERROR(CLWinogradOutputTransformKernel::validate(&batched_mm_output, biases, output, winograd_info));
-
-    // Validate Activation Layer
-    if(act_info.enabled())
-    {
-        ARM_COMPUTE_RETURN_ON_ERROR(CLActivationLayer::validate(output, nullptr, act_info));
-    }
+    ARM_COMPUTE_RETURN_ON_ERROR(CLWinogradOutputTransformKernel::validate(&batched_mm_output, biases, output, winograd_info, act_info));
 
     return Status{};
 }
@@ -198,7 +201,7 @@ void CLWinogradConvolutionLayer::run()
 {
     prepare();
 
-    _memory_group.acquire();
+    MemoryGroupResourceScope scope_mg(_memory_group);
 
     // Run input transform
     _input_transform.run();
@@ -208,8 +211,6 @@ void CLWinogradConvolutionLayer::run()
 
     // Run output transform
     CLScheduler::get().enqueue(_output_transform);
-
-    _memory_group.release();
 }
 
 void CLWinogradConvolutionLayer::prepare()

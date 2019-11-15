@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 ARM Limited.
+ * Copyright (c) 2016-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,9 +24,11 @@
 #ifndef __ARM_COMPUTE_CLTENSORALLOCATOR_H__
 #define __ARM_COMPUTE_CLTENSORALLOCATOR_H__
 
+#include "arm_compute/runtime/CL/CLArray.h"
 #include "arm_compute/runtime/CL/CLMemory.h"
 #include "arm_compute/runtime/ITensorAllocator.h"
 
+#include "arm_compute/core/CL/CLTypes.h"
 #include "arm_compute/core/CL/OpenCL.h"
 
 #include <cstdint>
@@ -67,6 +69,11 @@ public:
      * @return pointer to the CL data.
      */
     const cl::Buffer &cl_data() const;
+    /** Wrapped quantization info data accessor
+     *
+     * @return A wrapped quantization info object.
+     */
+    CLQuantization quantization() const;
 
     /** Enqueue a map operation of the allocated buffer on the given queue.
      *
@@ -103,13 +110,19 @@ public:
     void free() override;
     /** Import an existing memory as a tensor's backing memory
      *
-     * @warning ownership of memory is not transferred
+     * @warning memory should have been created under the same context that ACL uses.
+     * @warning memory is expected to be aligned with the device requirements.
+     * @warning tensor shouldn't be memory managed.
+     * @warning ownership of memory is not transferred.
+     * @warning memory must be writable in case of in-place operations
+     * @warning padding should be accounted by the client code.
+     * @note buffer size will be checked to be compliant with total_size reported by ITensorInfo.
      *
-     * @param[in] buffer Buffer to import
+     * @param[in] buffer Buffer to be used as backing memory
      *
-     * @return error status
+     * @return An error status
      */
-    arm_compute::Status import_memory(cl::Buffer buffer);
+    Status import_memory(cl::Buffer buffer);
     /** Associates the tensor with a memory group
      *
      * @param[in] associated_memory_group Memory group to associate the tensor with
@@ -133,6 +146,8 @@ private:
     CLMemory       _memory;                  /**< OpenCL memory */
     uint8_t       *_mapping;                 /**< Pointer to the CPU mapping of the OpenCL buffer. */
     CLTensor      *_owner;                   /**< Owner of the allocator */
+    CLFloatArray   _scale;
+    CLInt32Array   _offset;
 };
 } // namespace arm_compute
 #endif /* __ARM_COMPUTE_CLTENSORALLOCATOR_H__ */

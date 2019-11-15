@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 ARM Limited.
+ * Copyright (c) 2016-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,8 @@ namespace arm_compute
 {
 namespace
 {
+constexpr unsigned int num_elems_processed_per_iteration = 16;
+
 Status validate_arguments(const ITensorInfo *input, const ITensorInfo *output, float beta)
 {
     ARM_COMPUTE_RETURN_ERROR_ON_NULLPTR(input, output);
@@ -60,7 +62,7 @@ void matrix_addition_f32(const ITensor *input, ITensor *output, const Window &wi
     Iterator in(input, window);
     Iterator out(output, window);
 
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         const auto in_ptr  = reinterpret_cast<const float *>(in.ptr());
         const auto out_ptr = reinterpret_cast<float *>(out.ptr());
@@ -87,7 +89,7 @@ void matrix_addition_f16(const ITensor *input, ITensor *output, const Window &wi
     Iterator in(input, window);
     Iterator out(output, window);
 
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         const auto in_ptr  = reinterpret_cast<const float16_t *>(in.ptr());
         const auto out_ptr = reinterpret_cast<float16_t *>(out.ptr());
@@ -134,7 +136,6 @@ void NEGEMMMatrixAdditionKernel::configure(const ITensor *input, ITensor *output
     }
 
     // Configure kernel window
-    constexpr unsigned int num_elems_processed_per_iteration = 16;
     INESimpleKernel::configure(input, output, num_elems_processed_per_iteration);
 
     _beta = beta;
@@ -142,7 +143,6 @@ void NEGEMMMatrixAdditionKernel::configure(const ITensor *input, ITensor *output
 
 Status NEGEMMMatrixAdditionKernel::validate(const ITensorInfo *input, const ITensorInfo *output, float beta)
 {
-    constexpr unsigned int num_elems_processed_per_iteration = 16;
     ARM_COMPUTE_RETURN_ON_ERROR(validate_arguments(input, output, beta));
     ARM_COMPUTE_RETURN_ON_ERROR(INESimpleKernel::validate(input->clone().get(), output->clone().get(), num_elems_processed_per_iteration));
     return Status{};

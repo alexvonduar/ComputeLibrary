@@ -40,7 +40,7 @@
   <img alt="Compute Library" src="https://raw.githubusercontent.com/ARM-software/ComputeLibrary/gh-pages/ACL_logo.png" style="max-width: 100%;margin-top: 15px;margin-left: 10px"/>
   <td style="padding-left: 0.5em;">
    <div id="projectname">
-   &#160;<span id="projectnumber">19.02</span>
+   &#160;<span id="projectnumber">19.08</span>
    </div>
   </td>
  </tr>
@@ -174,6 +174,7 @@ File organisation</h1>
 </ul>
 <p>You should have the following file organisation: </p><pre class="fragment">.
 ├── arm_compute --&gt; All the arm_compute headers
+│   ├── graph.h --&gt; Includes all the Graph headers at once.
 │   ├── core
 │   │   ├── CL
 │   │   │   ├── CLKernelLibrary.h --&gt; Manages all the OpenCL kernels compilation and caching, provides accessors for the OpenCL Context.
@@ -264,7 +265,6 @@ File organisation</h1>
 │   ├── graph_*.cpp --&gt; Graph examples
 │   ├── neoncl_*.cpp --&gt; NEON / OpenCL interoperability examples
 │   └── neon_*.cpp --&gt; NEON examples
-├── graph.h --&gt; Includes all the Graph headers at once.
 ├── include
 │   ├── CL
 │   │   └── Khronos OpenCL C headers and C++ wrapper
@@ -309,8 +309,6 @@ File organisation</h1>
 │   │   └── Datasets for all the validation / benchmark tests, layer configurations for various networks, etc.
 │   ├── framework
 │   │   └── Boiler plate code for both validation and benchmark test suites (Command line parsers, instruments, output loggers, etc.)
-│   ├── networks
-│   │   └── Examples of how to instantiate networks.
 │   └── validation --&gt; Sources for validation
 │       ├── Validation specific files
 │       ├── fixtures
@@ -333,6 +331,153 @@ v17.04 (First release of April 2017)
 </pre><dl class="section note"><dt>Note</dt><dd>We're aiming at releasing one major public release with new features per quarter. All releases in between will only contain bug fixes.</dd></dl>
 <h2><a class="anchor" id="S2_2_changelog"></a>
 Changelog</h2>
+<p>v19.08 Public major release</p><ul>
+<li>Various bug fixes.</li>
+<li>Various optimisations.</li>
+<li>Deprecated NEON functions<ul>
+<li>NEDepthConcatenateLayer</li>
+<li>NEWidthConcatenateLayer</li>
+</ul>
+</li>
+<li>Deprecated OpenCL kernels / functions<ul>
+<li>CLDepthConcatenateLayer</li>
+<li>CLGEMMInterleave4x4Kernel / CLGEMMInterleave4x4</li>
+<li>CLGEMMTranspose1xWKernel / CLGEMMTranspose1xW</li>
+<li>CLWidthConcatenateLayer</li>
+</ul>
+</li>
+<li>New NEON kernels / functions:<ul>
+<li><a class="el" href="classarm__compute_1_1_n_e_abs_layer.xhtml">NEAbsLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_cast.xhtml">NECast</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_elementwise_power.xhtml">NEElementwisePower</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_log_layer.xhtml">NELogLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_l_s_t_m_layer_quantized.xhtml">NELSTMLayerQuantized</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_neg_layer.xhtml">NENegLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_p_relu_layer.xhtml">NEPReluLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_sin_layer.xhtml">NESinLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_batch_concatenate_layer_kernel.xhtml">NEBatchConcatenateLayerKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_depth_to_space_layer_kernel.xhtml">NEDepthToSpaceLayerKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_depth_to_space_layer.xhtml">NEDepthToSpaceLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_depthwise_convolution_layer_native_kernel.xhtml">NEDepthwiseConvolutionLayerNativeKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_g_e_m_m_lowp_quantize_down_int32_to_int16_scale_by_fixed_point_kernel.xhtml">NEGEMMLowpQuantizeDownInt32ToInt16ScaleByFixedPointKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_mean_std_dev_normalization_kernel.xhtml">NEMeanStdDevNormalizationKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_mean_std_dev_normalization_layer.xhtml">NEMeanStdDevNormalizationLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_space_to_depth_layer_kernel.xhtml">NESpaceToDepthLayerKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_space_to_depth_layer.xhtml">NESpaceToDepthLayer</a></li>
+</ul>
+</li>
+<li>New OpenCL kernels / functions:<ul>
+<li><a class="el" href="classarm__compute_1_1_c_l_abs_layer.xhtml">CLAbsLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_elementwise_power.xhtml">CLElementwisePower</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_log_layer.xhtml">CLLogLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_l_s_t_m_layer_quantized.xhtml">CLLSTMLayerQuantized</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_neg_layer.xhtml">CLNegLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_p_relu_layer.xhtml">CLPReluLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_sin_layer.xhtml">CLSinLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_batch_concatenate_layer_kernel.xhtml">CLBatchConcatenateLayerKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_depth_to_space_layer_kernel.xhtml">CLDepthToSpaceLayerKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_depth_to_space_layer.xhtml">CLDepthToSpaceLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_lowp_matrix_multiply_native_kernel.xhtml">CLGEMMLowpMatrixMultiplyNativeKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_lowp_quantize_down_int32_to_int16_scale_by_fixed_point_kernel.xhtml">CLGEMMLowpQuantizeDownInt32ToInt16ScaleByFixedPointKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_matrix_multiply_native_kernel.xhtml">CLGEMMMatrixMultiplyNativeKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_mean_std_dev_normalization_kernel.xhtml">CLMeanStdDevNormalizationKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_mean_std_dev_normalization_layer.xhtml">CLMeanStdDevNormalizationLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_space_to_depth_layer_kernel.xhtml">CLSpaceToDepthLayerKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_space_to_depth_layer.xhtml">CLSpaceToDepthLayer</a></li>
+</ul>
+</li>
+<li>New examples:<ul>
+<li>neon_opticalflow</li>
+<li>cl_cache</li>
+<li>neon_permute</li>
+</ul>
+</li>
+<li>Added support for FP16 in <a class="el" href="classarm__compute_1_1_n_e_deconvolution_layer.xhtml">NEDeconvolutionLayer</a></li>
+<li>Added support for FP16 in <a class="el" href="classarm__compute_1_1_c_l_deconvolution_layer.xhtml">CLDeconvolutionLayer</a></li>
+<li>Added support for REDUCE_MIN and REDUCE_MAX in <a class="el" href="namespacearm__compute.xhtml#a5827eb9cb394e74af87f74bd354fb45b">ReductionOperation</a></li>
+<li>Enable the fusion of batch normalization with convolution and depthwise convolution layer for FP32 in the graph API (OpenCL only)</li>
+<li>Added support for fusing activation function and broadcast addition with the matrix multiplication for FP32 (OpenCL only)</li>
+<li>Re-factored the depthwise convolution layer kernel on NEON for generic cases</li>
+<li>Added an optimized depthwise convolution layer kernel for 5x5 filters (NEON only)</li>
+<li>Added support to enable OpenCL kernel cache. Added example showing how to load the prebuilt OpenCL kernels from a binary cache file</li>
+<li>Altered <a class="el" href="classarm__compute_1_1_quantization_info.xhtml">QuantizationInfo</a> interface to support per-channel quantization.</li>
+<li>The <a class="el" href="classarm__compute_1_1_n_e_depthwise_convolution_layer3x3.xhtml">NEDepthwiseConvolutionLayer3x3</a> will be replaced by <a class="el" href="classarm__compute_1_1_n_e_depthwise_convolution_layer_optimized.xhtml">NEDepthwiseConvolutionLayerOptimized</a> to accommodate for future optimizations.</li>
+<li>Removed inner_border_right and inner_border_top parameters from <a class="el" href="classarm__compute_1_1_c_l_deconvolution_layer.xhtml">CLDeconvolutionLayer</a> interface</li>
+<li>Removed inner_border_right and inner_border_top parameters from <a class="el" href="classarm__compute_1_1_n_e_deconvolution_layer.xhtml">NEDeconvolutionLayer</a> interface</li>
+<li>Optimized the NEON assembly kernel for GEMMLowp. The new implementation fuses the output stage and quantization with the matrix multiplication kernel</li>
+</ul>
+<p>v19.05 Public major release</p><ul>
+<li>Various bug fixes.</li>
+<li>Various optimisations.</li>
+<li>New Neon kernels / functions:<ul>
+<li><a class="el" href="classarm__compute_1_1_n_e_batch_to_space_layer_kernel.xhtml">NEBatchToSpaceLayerKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_batch_to_space_layer.xhtml">NEBatchToSpaceLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_complex_pixel_wise_multiplication_kernel.xhtml">NEComplexPixelWiseMultiplicationKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_complex_pixel_wise_multiplication.xhtml">NEComplexPixelWiseMultiplication</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_crop_kernel.xhtml">NECropKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_crop_resize.xhtml">NECropResize</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_depthwise_convolution_assembly_dispatch.xhtml">NEDepthwiseConvolutionAssemblyDispatch</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_f_f_t_digit_reverse_kernel.xhtml">NEFFTDigitReverseKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_f_f_t_radix_stage_kernel.xhtml">NEFFTRadixStageKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_f_f_t_scale_kernel.xhtml">NEFFTScaleKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_g_e_m_m_lowp_offset_contribution_output_stage_kernel.xhtml">NEGEMMLowpOffsetContributionOutputStageKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_height_concatenate_layer_kernel.xhtml">NEHeightConcatenateLayerKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_space_to_batch_layer_kernel.xhtml">NESpaceToBatchLayerKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_space_to_batch_layer.xhtml">NESpaceToBatchLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_f_f_t1_d.xhtml">NEFFT1D</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_f_f_t2_d.xhtml">NEFFT2D</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_f_f_t_convolution_layer.xhtml">NEFFTConvolutionLayer</a></li>
+</ul>
+</li>
+<li>New OpenCL kernels / functions:<ul>
+<li><a class="el" href="classarm__compute_1_1_c_l_complex_pixel_wise_multiplication_kernel.xhtml">CLComplexPixelWiseMultiplicationKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_complex_pixel_wise_multiplication.xhtml">CLComplexPixelWiseMultiplication</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_crop_kernel.xhtml">CLCropKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_crop_resize.xhtml">CLCropResize</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_deconvolution_reshape_output_kernel.xhtml">CLDeconvolutionReshapeOutputKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_f_f_t_digit_reverse_kernel.xhtml">CLFFTDigitReverseKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_f_f_t_radix_stage_kernel.xhtml">CLFFTRadixStageKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_f_f_t_scale_kernel.xhtml">CLFFTScaleKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_lowp_matrix_multiply_reshaped_only_r_h_s_kernel.xhtml">CLGEMMLowpMatrixMultiplyReshapedOnlyRHSKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_matrix_multiply_reshaped_only_r_h_s_kernel.xhtml">CLGEMMMatrixMultiplyReshapedOnlyRHSKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_height_concatenate_layer_kernel.xhtml">CLHeightConcatenateLayerKernel</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_direct_deconvolution_layer.xhtml">CLDirectDeconvolutionLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_f_f_t1_d.xhtml">CLFFT1D</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_f_f_t2_d.xhtml">CLFFT2D</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_f_f_t_convolution_layer.xhtml">CLFFTConvolutionLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_deconvolution_layer.xhtml">CLGEMMDeconvolutionLayer</a></li>
+</ul>
+</li>
+<li>New OpenGLES kernels / functions:<ul>
+<li><a class="el" href="classarm__compute_1_1_g_c_concatenate_layer.xhtml">GCConcatenateLayer</a></li>
+</ul>
+</li>
+<li>Deprecated functions/interfaces<ul>
+<li>GCDepthConcatenateLayer</li>
+<li>NEWidthConcatenateLayer</li>
+<li>NEDepthConcatenateLayer</li>
+<li>CLWidthConcatenateLayer</li>
+<li>CLDepthConcatenateLayer</li>
+<li>CLGEMMInterleave4x4</li>
+<li>CLGEMMTranspose1xW</li>
+</ul>
+</li>
+<li>Support different quantization info in CLConcatLayer.</li>
+<li>Add checks on different input/output quantization info were not supported.</li>
+<li>Tensors have different quantization information.</li>
+<li>Add FP16 support checks.</li>
+<li>Fix output quantization CLDeptwiseConv3x3 when activation is fused.</li>
+<li>New graph examples:<ul>
+<li>graph_convolution</li>
+<li>graph_fully_connected</li>
+<li>graph_depthwise_convolution</li>
+<li>Deepspeech v0.4.1</li>
+</ul>
+</li>
+<li>Add support for QASYMM8 in <a class="el" href="classarm__compute_1_1_n_e_arithmetic_subtraction_kernel.xhtml" title="Interface for the kernel to perform subtraction between two tensors.">NEArithmeticSubtractionKernel</a>.</li>
+<li>Add support for QASYMM8 in <a class="el" href="classarm__compute_1_1_n_e_pixel_wise_multiplication_kernel.xhtml" title="Interface for the kernel to perform addition between two tensors.">NEPixelWiseMultiplicationKernel</a>.</li>
+<li>Add support for QASYMM8 NEDeconvolution.</li>
+<li>Add support for DequantizationLayer for NEON/CL.</li>
+<li>Add support for dilation in CLDepthwiseConvolution.</li>
+<li>Fuse offset contribution with the output stage when we use <a class="el" href="classarm__compute_1_1_n_e_g_e_m_m_lowp_matrix_multiply_core.xhtml" title="Basic function to execute GEMMLowpMatrixMultiplyCore on NEON.">NEGEMMLowpMatrixMultiplyCore</a>.</li>
+<li>Optimize CLDeconvolution.</li>
+<li>Add StackLayer to the graph API.</li>
+<li>Add support for "reflect" padding mode in NEPad.</li>
+<li>Winograd 7x7 NHWC on OpenCL.</li>
+<li>Rework CL ML layers to run exclusively on CL.</li>
+<li>Support different quantization info in PoolingLayer.</li>
+<li>Implement and test import memory interfaces.</li>
+<li>Added new tests and removed old ones.</li>
+<li>Various clang-tidy fixes.</li>
+</ul>
 <p>v19.02 Public major release</p><ul>
 <li>Various bug fixes.</li>
 <li>Various optimisations.</li>
@@ -483,7 +628,7 @@ Changelog</h2>
 <li>Added documentation for add a new function or kernel.</li>
 <li>Improved doxygen documentation adding a list of the existing functions.</li>
 <li>Add 4D tensors support to<ul>
-<li><a class="el" href="classarm__compute_1_1_c_l_width_concatenate_layer.xhtml">CLWidthConcatenateLayer</a></li>
+<li>CLWidthConcatenateLayer</li>
 <li><a class="el" href="classarm__compute_1_1_c_l_flatten_layer.xhtml">CLFlattenLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_softmax_layer.xhtml">CLSoftmaxLayer</a></li>
 </ul>
@@ -520,7 +665,7 @@ Changelog</h2>
 <li>Removed support for QS8/QS16 data types.</li>
 <li>Added support for grouped convolution in <a class="el" href="classarm__compute_1_1_c_l_convolution_layer.xhtml">CLConvolutionLayer</a>.</li>
 <li>Added NHWC data layout support to:<ul>
-<li><a class="el" href="classarm__compute_1_1_n_e_depth_concatenate_layer.xhtml">NEDepthConcatenateLayer</a> / <a class="el" href="classarm__compute_1_1_c_l_depth_concatenate_layer.xhtml">CLDepthConcatenateLayer</a></li>
+<li>NEDepthConcatenateLayer / CLDepthConcatenateLayer</li>
 <li><a class="el" href="classarm__compute_1_1_n_e_winograd_convolution_layer.xhtml">NEWinogradConvolutionLayer</a> / <a class="el" href="classarm__compute_1_1_c_l_winograd_convolution_layer.xhtml">CLWinogradConvolutionLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_depthwise_convolution_layer.xhtml">CLDepthwiseConvolutionLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_direct_convolution_layer.xhtml">CLDirectConvolutionLayer</a></li>
@@ -571,7 +716,7 @@ Changelog</h2>
 <li><a class="el" href="classarm__compute_1_1_c_l_copy.xhtml">CLCopy</a> / <a class="el" href="classarm__compute_1_1_c_l_copy_kernel.xhtml">CLCopyKernel</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_l_s_t_m_layer.xhtml">CLLSTMLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_r_n_n_layer.xhtml">CLRNNLayer</a></li>
-<li><a class="el" href="classarm__compute_1_1_c_l_width_concatenate_layer.xhtml">CLWidthConcatenateLayer</a> / <a class="el" href="classarm__compute_1_1_c_l_width_concatenate_layer_kernel.xhtml">CLWidthConcatenateLayerKernel</a></li>
+<li>CLWidthConcatenateLayer / <a class="el" href="classarm__compute_1_1_c_l_width_concatenate_layer_kernel.xhtml">CLWidthConcatenateLayerKernel</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_winograd_filter_transform_kernel.xhtml">CLWinogradFilterTransformKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_winograd_input_transform_kernel.xhtml">CLWinogradInputTransformKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_winograd_convolution_layer.xhtml">CLWinogradConvolutionLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_winograd_input_transform_kernel.xhtml">CLWinogradInputTransformKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_winograd_input_transform.xhtml">CLWinogradInputTransform</a></li>
 </ul>
@@ -719,7 +864,7 @@ Changelog</h2>
 <li><a class="el" href="classarm__compute_1_1_g_c_activation_layer_kernel.xhtml">GCActivationLayerKernel</a> / <a class="el" href="classarm__compute_1_1_g_c_activation_layer.xhtml">GCActivationLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_g_c_batch_normalization_layer_kernel.xhtml">GCBatchNormalizationLayerKernel</a> / <a class="el" href="classarm__compute_1_1_g_c_batch_normalization_layer.xhtml">GCBatchNormalizationLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_g_c_col2_im_kernel.xhtml">GCCol2ImKernel</a></li>
-<li><a class="el" href="classarm__compute_1_1_g_c_depth_concatenate_layer_kernel.xhtml">GCDepthConcatenateLayerKernel</a> / <a class="el" href="classarm__compute_1_1_g_c_depth_concatenate_layer.xhtml">GCDepthConcatenateLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_g_c_depth_concatenate_layer_kernel.xhtml">GCDepthConcatenateLayerKernel</a> / GCDepthConcatenateLayer</li>
 <li><a class="el" href="classarm__compute_1_1_g_c_direct_convolution_layer_kernel.xhtml">GCDirectConvolutionLayerKernel</a> / <a class="el" href="classarm__compute_1_1_g_c_direct_convolution_layer.xhtml">GCDirectConvolutionLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_g_c_dropout_layer_kernel.xhtml">GCDropoutLayerKernel</a> / <a class="el" href="classarm__compute_1_1_g_c_dropout_layer.xhtml">GCDropoutLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_g_c_fill_border_kernel.xhtml">GCFillBorderKernel</a> / <a class="el" href="classarm__compute_1_1_g_c_fill_border.xhtml">GCFillBorder</a></li>
@@ -796,7 +941,7 @@ Changelog</h2>
 <li><a class="el" href="classarm__compute_1_1_c_l_direct_convolution_layer_kernel.xhtml">CLDirectConvolutionLayerKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_direct_convolution_layer.xhtml">CLDirectConvolutionLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_flatten_layer.xhtml">CLFlattenLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_floor_kernel.xhtml">CLFloorKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_floor.xhtml">CLFloor</a></li>
-<li><a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_transpose1x_w.xhtml">CLGEMMTranspose1xW</a></li>
+<li>CLGEMMTranspose1xW</li>
 <li><a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_matrix_vector_multiply_kernel.xhtml">CLGEMMMatrixVectorMultiplyKernel</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_l2_normalize_layer_kernel.xhtml">CLL2NormalizeLayerKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_l2_normalize_layer.xhtml">CLL2NormalizeLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_quantization_layer_kernel.xhtml">CLQuantizationLayerKernel</a> <a class="el" href="classarm__compute_1_1_c_l_min_max_layer_kernel.xhtml">CLMinMaxLayerKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_quantization_layer.xhtml">CLQuantizationLayer</a></li>
@@ -817,7 +962,7 @@ Changelog</h2>
 <li>User can specify his own scheduler by implementing the <a class="el" href="classarm__compute_1_1_i_scheduler.xhtml">IScheduler</a> interface.</li>
 <li>New OpenCL kernels / functions:<ul>
 <li><a class="el" href="classarm__compute_1_1_c_l_batch_normalization_layer_kernel.xhtml">CLBatchNormalizationLayerKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_batch_normalization_layer.xhtml">CLBatchNormalizationLayer</a></li>
-<li><a class="el" href="classarm__compute_1_1_c_l_depth_concatenate_layer_kernel.xhtml">CLDepthConcatenateLayerKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_depth_concatenate_layer.xhtml">CLDepthConcatenateLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_c_l_depth_concatenate_layer_kernel.xhtml">CLDepthConcatenateLayerKernel</a> / CLDepthConcatenateLayer</li>
 <li><a class="el" href="classarm__compute_1_1_c_l_h_o_g_orientation_binning_kernel.xhtml">CLHOGOrientationBinningKernel</a> <a class="el" href="classarm__compute_1_1_c_l_h_o_g_block_normalization_kernel.xhtml">CLHOGBlockNormalizationKernel</a>, <a class="el" href="classarm__compute_1_1_c_l_h_o_g_detector_kernel.xhtml">CLHOGDetectorKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_h_o_g_descriptor.xhtml">CLHOGDescriptor</a> <a class="el" href="classarm__compute_1_1_c_l_h_o_g_detector.xhtml">CLHOGDetector</a> <a class="el" href="classarm__compute_1_1_c_l_h_o_g_gradient.xhtml">CLHOGGradient</a> <a class="el" href="classarm__compute_1_1_c_l_h_o_g_multi_detection.xhtml">CLHOGMultiDetection</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_locally_connected_matrix_multiply_kernel.xhtml">CLLocallyConnectedMatrixMultiplyKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_locally_connected_layer.xhtml">CLLocallyConnectedLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_weights_reshape_kernel.xhtml">CLWeightsReshapeKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_convolution_layer_reshape_weights.xhtml">CLConvolutionLayerReshapeWeights</a></li>
@@ -829,7 +974,7 @@ Changelog</h2>
 </li>
 <li>New NEON kernels / functions:<ul>
 <li><a class="el" href="classarm__compute_1_1_n_e_batch_normalization_layer_kernel.xhtml">NEBatchNormalizationLayerKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_batch_normalization_layer.xhtml">NEBatchNormalizationLayer</a></li>
-<li><a class="el" href="classarm__compute_1_1_n_e_depth_concatenate_layer_kernel.xhtml">NEDepthConcatenateLayerKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_depth_concatenate_layer.xhtml">NEDepthConcatenateLayer</a></li>
+<li><a class="el" href="classarm__compute_1_1_n_e_depth_concatenate_layer_kernel.xhtml">NEDepthConcatenateLayerKernel</a> / NEDepthConcatenateLayer</li>
 <li><a class="el" href="classarm__compute_1_1_n_e_direct_convolution_layer_kernel.xhtml">NEDirectConvolutionLayerKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_direct_convolution_layer.xhtml">NEDirectConvolutionLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_n_e_locally_connected_matrix_multiply_kernel.xhtml">NELocallyConnectedMatrixMultiplyKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_locally_connected_layer.xhtml">NELocallyConnectedLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_n_e_weights_reshape_kernel.xhtml">NEWeightsReshapeKernel</a> / <a class="el" href="classarm__compute_1_1_n_e_convolution_layer_reshape_weights.xhtml">NEConvolutionLayerReshapeWeights</a></li>
@@ -885,7 +1030,7 @@ Changelog</h2>
 <p>v17.03 Sources preview</p><ul>
 <li>New OpenCL kernels / functions:<ul>
 <li><a class="el" href="classarm__compute_1_1_c_l_gradient_kernel.xhtml">CLGradientKernel</a>, <a class="el" href="classarm__compute_1_1_c_l_edge_non_max_suppression_kernel.xhtml">CLEdgeNonMaxSuppressionKernel</a>, <a class="el" href="classarm__compute_1_1_c_l_edge_trace_kernel.xhtml">CLEdgeTraceKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_canny_edge.xhtml">CLCannyEdge</a></li>
-<li>GEMM refactoring + FP16 support: <a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_interleave4x4_kernel.xhtml">CLGEMMInterleave4x4Kernel</a>, <a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_transpose1x_w_kernel.xhtml">CLGEMMTranspose1xWKernel</a>, <a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_matrix_multiply_kernel.xhtml">CLGEMMMatrixMultiplyKernel</a>, <a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_matrix_addition_kernel.xhtml">CLGEMMMatrixAdditionKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_g_e_m_m.xhtml">CLGEMM</a></li>
+<li>GEMM refactoring + FP16 support: CLGEMMInterleave4x4Kernel, CLGEMMTranspose1xWKernel, <a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_matrix_multiply_kernel.xhtml">CLGEMMMatrixMultiplyKernel</a>, <a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_matrix_addition_kernel.xhtml">CLGEMMMatrixAdditionKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_g_e_m_m.xhtml">CLGEMM</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_g_e_m_m_matrix_accumulate_biases_kernel.xhtml">CLGEMMMatrixAccumulateBiasesKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_fully_connected_layer.xhtml">CLFullyConnectedLayer</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_transpose_kernel.xhtml">CLTransposeKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_transpose.xhtml">CLTranspose</a></li>
 <li><a class="el" href="classarm__compute_1_1_c_l_l_k_tracker_init_kernel.xhtml">CLLKTrackerInitKernel</a>, <a class="el" href="classarm__compute_1_1_c_l_l_k_tracker_stage0_kernel.xhtml">CLLKTrackerStage0Kernel</a>, <a class="el" href="classarm__compute_1_1_c_l_l_k_tracker_stage1_kernel.xhtml">CLLKTrackerStage1Kernel</a>, <a class="el" href="classarm__compute_1_1_c_l_l_k_tracker_finalize_kernel.xhtml">CLLKTrackerFinalizeKernel</a> / <a class="el" href="classarm__compute_1_1_c_l_optical_flow.xhtml">CLOpticalFlow</a></li>
@@ -1102,7 +1247,7 @@ These two commands assume libarm_compute.so is available in your library path, i
 </pre><p>or </p><pre class="fragment">LD_LIBRARY_PATH=build ./cl_convolution
 </pre><dl class="section note"><dt>Note</dt><dd>Examples accept different types of arguments, to find out what they are run the example with <em>&ndash;help</em> as an argument. If no arguments are specified then random values will be used to execute the graph.</dd></dl>
 <p>For example: </p><pre class="fragment">LD_LIBRARY_PATH=. ./graph_lenet --help
-</pre><p>Below is a list of the common parameters among the graph examples : </p><div class="fragment"><div class="line"><span class="comment">/* Common graph parameters</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * --help             : Print the example&#39;s help message.</span></div><div class="line"><span class="comment"> * --threads          : The number of threads to be used by the example during execution.</span></div><div class="line"><span class="comment"> * --target           : Execution target to be used by the examples. Supported target options: NEON, CL, GC.</span></div><div class="line"><span class="comment"> * --type             : Data type to be used by the examples. Supported data type options: QASYMM8, F16, F32.</span></div><div class="line"><span class="comment"> * --layout           : Data layout to be used by the examples. Supported data layout options : NCHW, NHWC.</span></div><div class="line"><span class="comment"> * --enable-tuner     : Toggle option to enable the OpenCL dynamic tuner.</span></div><div class="line"><span class="comment"> * --fast-math        : Toggle option to enable the fast math option.</span></div><div class="line"><span class="comment"> * --data             : Path that contains the trainable parameter files of graph layers.</span></div><div class="line"><span class="comment"> * --image            : Image to load and operate on. Image types supported: PPM, JPEG, NPY.</span></div><div class="line"><span class="comment"> * --labels           : File that contains the labels that classify upon.</span></div><div class="line"><span class="comment"> * --validation-file  : File that contains a list of image names with their corresponding label id (e.g. image0.jpg 5).</span></div><div class="line"><span class="comment"> *                      This is used to run the graph over a number of images and report top-1 and top-5 metrics.</span></div><div class="line"><span class="comment"> * --validation-path  : The path where the validation images specified in the validation file reside.</span></div><div class="line"><span class="comment"> * --validation-range : The range of the images to validate from the validation file (e.g 0,9).</span></div><div class="line"><span class="comment"> *                      If not specified all the images will be validated.</span></div><div class="line"><span class="comment"> * --tuner-file       : The file to store the OpenCL dynamic tuner tuned parameters.</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Note that data, image and labels options should be provided to perform an inference run on an image.</span></div><div class="line"><span class="comment"> * Note that validation-file and validation-path should be provided to perform a graph accuracy estimation.</span></div><div class="line"><span class="comment"> * Note GLES target is not supported for most of the networks.</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Example execution commands:</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Execute a single inference given an image and a file containing the correspondence between label ids and human readable labels:</span></div><div class="line"><span class="comment"> * ./graph_vgg16 --data=data/ --target=cl --layout=nhwc --image=kart.jpeg --labels=imagenet1000_clsid_to_human.txt</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Perform a graph validation on a list of images:</span></div><div class="line"><span class="comment"> * ./graph_vgg16 --data=data/ --target=neon --threads=4 --layout=nchw --validation-file=val.txt --validation-path=ilsvrc_test_images/</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * File formats:</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Validation file should be a plain file containing the names of the images followed by the correct label id.</span></div><div class="line"><span class="comment"> * For example:</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * image0.jpeg 882</span></div><div class="line"><span class="comment"> * image1.jpeg 34</span></div><div class="line"><span class="comment"> * image2.jpeg 354</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Labels file should be a plain file where each line is the respective human readable label (counting starts from 0).</span></div><div class="line"><span class="comment"> * For example:</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * 0: label0_name            label0_name</span></div><div class="line"><span class="comment"> * 1: label1_name     or     label1_name</span></div><div class="line"><span class="comment"> * 2: label2_name            label2_name</span></div><div class="line"><span class="comment"> */</span></div></div><!-- fragment --> <h2><a class="anchor" id="S3_3_android"></a>
+</pre><p>Below is a list of the common parameters among the graph examples : </p><div class="fragment"><div class="line"><span class="comment">/* Common graph parameters</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * --help             : Print the example&#39;s help message.</span></div><div class="line"><span class="comment"> * --threads          : The number of threads to be used by the example during execution.</span></div><div class="line"><span class="comment"> * --target           : Execution target to be used by the examples. Supported target options: NEON, CL, GC.</span></div><div class="line"><span class="comment"> * --type             : Data type to be used by the examples. Supported data type options: QASYMM8, F16, F32.</span></div><div class="line"><span class="comment"> * --layout           : Data layout to be used by the examples. Supported data layout options : NCHW, NHWC.</span></div><div class="line"><span class="comment"> * --enable-tuner     : Toggle option to enable the OpenCL dynamic tuner.</span></div><div class="line"><span class="comment"> * --enable-cl-cache  : Toggle option to load the prebuilt opencl kernels from a cache file.</span></div><div class="line"><span class="comment"> * --fast-math        : Toggle option to enable the fast math option.</span></div><div class="line"><span class="comment"> * --data             : Path that contains the trainable parameter files of graph layers.</span></div><div class="line"><span class="comment"> * --image            : Image to load and operate on. Image types supported: PPM, JPEG, NPY.</span></div><div class="line"><span class="comment"> * --labels           : File that contains the labels that classify upon.</span></div><div class="line"><span class="comment"> * --validation-file  : File that contains a list of image names with their corresponding label id (e.g. image0.jpg 5).</span></div><div class="line"><span class="comment"> *                      This is used to run the graph over a number of images and report top-1 and top-5 metrics.</span></div><div class="line"><span class="comment"> * --validation-path  : The path where the validation images specified in the validation file reside.</span></div><div class="line"><span class="comment"> * --validation-range : The range of the images to validate from the validation file (e.g 0,9).</span></div><div class="line"><span class="comment"> *                      If not specified all the images will be validated.</span></div><div class="line"><span class="comment"> * --tuner-file       : The file to store the OpenCL dynamic tuner tuned parameters.</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Note that data, image and labels options should be provided to perform an inference run on an image.</span></div><div class="line"><span class="comment"> * Note that validation-file and validation-path should be provided to perform a graph accuracy estimation.</span></div><div class="line"><span class="comment"> * Note GLES target is not supported for most of the networks.</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Example execution commands:</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Execute a single inference given an image and a file containing the correspondence between label ids and human readable labels:</span></div><div class="line"><span class="comment"> * ./graph_vgg16 --data=data/ --target=cl --layout=nhwc --image=kart.jpeg --labels=imagenet1000_clsid_to_human.txt</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Perform a graph validation on a list of images:</span></div><div class="line"><span class="comment"> * ./graph_vgg16 --data=data/ --target=neon --threads=4 --layout=nchw --validation-file=val.txt --validation-path=ilsvrc_test_images/</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * File formats:</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Validation file should be a plain file containing the names of the images followed by the correct label id.</span></div><div class="line"><span class="comment"> * For example:</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * image0.jpeg 882</span></div><div class="line"><span class="comment"> * image1.jpeg 34</span></div><div class="line"><span class="comment"> * image2.jpeg 354</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * Labels file should be a plain file where each line is the respective human readable label (counting starts from 0).</span></div><div class="line"><span class="comment"> * For example:</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * 0: label0_name            label0_name</span></div><div class="line"><span class="comment"> * 1: label1_name     or     label1_name</span></div><div class="line"><span class="comment"> * 2: label2_name            label2_name</span></div><div class="line"><span class="comment"> */</span></div></div><!-- fragment --> <h2><a class="anchor" id="S3_3_android"></a>
 Building for Android</h2>
 <p>For Android, the library was successfully built and tested using Google's standalone toolchains:</p><ul>
 <li>clang++ from NDK r17b for armv7a</li>
@@ -1112,7 +1257,7 @@ Building for Android</h2>
 <p>Here is a guide to <a href="https://developer.android.com/ndk/guides/standalone_toolchain.html">create your Android standalone toolchains from the NDK</a></p>
 <ul>
 <li>Download the NDK r17b from here: <a href="https://developer.android.com/ndk/downloads/index.html">https://developer.android.com/ndk/downloads/index.html</a></li>
-<li>Make sure you have Python 2 installed on your machine.</li>
+<li>Make sure you have Python 2.7 installed on your machine.</li>
 <li>Generate the 32 and/or 64 toolchains by running the following commands:</li>
 </ul>
 <pre class="fragment">$NDK/build/tools/make_standalone_toolchain.py --arch arm64 --install-dir $MY_TOOLCHAINS/aarch64-linux-android-ndk-r17b --stl libc++ --api 21
@@ -1188,7 +1333,7 @@ Bash on Ubuntu on Windows</h3>
 <p>The best and easiest option is to use <a href="https://msdn.microsoft.com/en-gb/commandline/wsl/about">Ubuntu on Windows</a>. This feature is still marked as <em>beta</em> and thus might not be available. However, if it is building the library is as simple as opening a <em>Bash on Ubuntu on Windows</em> shell and following the general guidelines given above.</p>
 <h3><a class="anchor" id="S3_5_2_cygwin"></a>
 Cygwin</h3>
-<p>If the Windows subsystem for Linux is not available <a href="https://www.cygwin.com/">Cygwin</a> can be used to install and run <code>scons</code>. In addition to the default packages installed by Cygwin <code>scons</code> has to be selected in the installer. (<code>git</code> might also be useful but is not strictly required if you already have got the source code of the library.) Linaro provides pre-built versions of <a href="http://releases.linaro.org/components/toolchain/binaries/">GCC cross-compilers</a> that can be used from the Cygwin terminal. When building for Android the compiler is included in the Android standalone toolchain. After everything has been set up in the Cygwin terminal the general guide on building the library can be followed.</p>
+<p>If the Windows subsystem for Linux is not available <a href="https://www.cygwin.com/">Cygwin</a> can be used to install and run <code>scons</code>, the minimum Cygwin version must be 3.0.7 or later. In addition to the default packages installed by Cygwin <code>scons</code> has to be selected in the installer. (<code>git</code> might also be useful but is not strictly required if you already have got the source code of the library.) Linaro provides pre-built versions of <a href="http://releases.linaro.org/components/toolchain/binaries/">GCC cross-compilers</a> that can be used from the Cygwin terminal. When building for Android the compiler is included in the Android standalone toolchain. After everything has been set up in the Cygwin terminal the general guide on building the library can be followed.</p>
 <h2><a class="anchor" id="S3_6_cl_stub_library"></a>
 The OpenCL stub library</h2>
 <p>In the opencl-1.2-stubs folder you will find the sources to build a stub OpenCL library which then can be used to link your application or <a class="el" href="namespacearm__compute.xhtml" title="Copyright (c) 2017-2018 ARM Limited.">arm_compute</a> against.</p>
@@ -1231,7 +1376,7 @@ Performance improvements</h3>
 <p>SVM allocations are supported for all the underlying allocations in Compute Library. To enable this OpenCL 2.0 and above is a requirement.</p>
 <h2><a class="anchor" id="S3_9_cl_tuner"></a>
 OpenCL Tuner</h2>
-<p>The OpenCL tuner, a.k.a. <a class="el" href="classarm__compute_1_1_c_l_tuner.xhtml" title="Basic implementation of the OpenCL tuner interface.">CLTuner</a>, is a module of Arm Compute Library that can improve the performance of the OpenCL kernels tuning the Local-Workgroup-Size (LWS). The optimal LWS for each unique OpenCL kernel configuration is stored in a table. This table can be either imported or exported from/to a file. The OpenCL tuner performs a brute-force approach: it runs the same OpenCL kernel for a range of local workgroup sizes and keep the local workgroup size of the fastest run to use in subsequent calls to the kernel. In order for the performance numbers to be meaningful you must disable the GPU power management and set it to a fixed frequency for the entire duration of the tuning phase.</p>
+<p>The OpenCL tuner, a.k.a. <a class="el" href="classarm__compute_1_1_c_l_tuner.xhtml" title="Basic implementation of the OpenCL tuner interface.">CLTuner</a>, is a module of Arm Compute Library that can improve the performance of the OpenCL kernels tuning the Local-Workgroup-Size (LWS). The optimal LWS for each unique OpenCL kernel configuration is stored in a table. This table can be either imported or exported from/to a file. The OpenCL tuner runs the same OpenCL kernel for a range of local workgroup sizes and keeps the local workgroup size of the fastest run to use in subsequent calls to the kernel. It supports three modes of tuning with different trade-offs between the time taken to tune and the kernel execution time achieved using the best LWS found. In the Exhaustive mode, it searches all the supported values of LWS. This mode takes the longest time to tune and is the most likely to find the optimal LWS. Normal mode searches a subset of LWS values to yield a good approximation of the optimal LWS. It takes less time to tune than Exhaustive mode. Rapid mode takes the shortest time to tune and finds an LWS value that is at least as good or better than the default LWS value. The mode affects only the search for the optimal LWS and has no effect when the LWS value is imported from a file. In order for the performance numbers to be meaningful you must disable the GPU power management and set it to a fixed frequency for the entire duration of the tuning phase.</p>
 <p>If you wish to know more about LWS and the important role on improving the GPU cache utilization, we suggest having a look at the presentation "Even Faster CNNs: Exploring the New Class of Winograd Algorithms available at the following link:</p>
 <p><a href="https://www.embedded-vision.com/platinum-members/arm/embedded-vision-training/videos/pages/may-2018-embedded-vision-summit-iodice">https://www.embedded-vision.com/platinum-members/arm/embedded-vision-training/videos/pages/may-2018-embedded-vision-summit-iodice</a></p>
 <p>Tuning a network from scratch can be long and affect considerably the execution time for the first run of your network. It is recommended for this reason to store the <a class="el" href="classarm__compute_1_1_c_l_tuner.xhtml" title="Basic implementation of the OpenCL tuner interface.">CLTuner</a>'s result in a file to amortize this time when you either re-use the same network or the functions with the same configurations. The tuning is performed only once for each OpenCL kernel.</p>
@@ -1262,7 +1407,7 @@ How to use it</h3>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Feb 28 2019 12:25:07 for Compute Library by
+    <li class="footer">Generated on Mon Sep 2 2019 11:47:42 for Compute Library by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.15 </li>
   </ul>

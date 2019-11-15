@@ -38,16 +38,18 @@ namespace datasets
 class DepthwiseConvolutionLayerDataset
 {
 public:
-    using type = std::tuple<TensorShape, Size2D, PadStrideInfo>;
+    using type = std::tuple<TensorShape, Size2D, PadStrideInfo, Size2D>;
 
     struct iterator
     {
         iterator(std::vector<TensorShape>::const_iterator   src_it,
                  std::vector<Size2D>::const_iterator        weights_it,
-                 std::vector<PadStrideInfo>::const_iterator infos_it)
+                 std::vector<PadStrideInfo>::const_iterator infos_it,
+                 std::vector<Size2D>::const_iterator        dilation_it)
             : _src_it{ std::move(src_it) },
               _weights_it{ std::move(weights_it) },
-              _infos_it{ std::move(infos_it) }
+              _infos_it{ std::move(infos_it) },
+              _dilation_it{ std::move(dilation_it) }
         {
         }
 
@@ -56,13 +58,14 @@ public:
             std::stringstream description;
             description << "In=" << *_src_it << ":";
             description << "Weights=" << *_weights_it << ":";
-            description << "Info=" << *_infos_it;
+            description << "Info=" << *_infos_it << ":";
+            description << "Dilation=" << *_dilation_it;
             return description.str();
         }
 
         DepthwiseConvolutionLayerDataset::type operator*() const
         {
-            return std::make_tuple(*_src_it, *_weights_it, *_infos_it);
+            return std::make_tuple(*_src_it, *_weights_it, *_infos_it, *_dilation_it);
         }
 
         iterator &operator++()
@@ -70,6 +73,7 @@ public:
             ++_src_it;
             ++_weights_it;
             ++_infos_it;
+            ++_dilation_it;
 
             return *this;
         }
@@ -78,23 +82,25 @@ public:
         std::vector<TensorShape>::const_iterator   _src_it;
         std::vector<Size2D>::const_iterator        _weights_it;
         std::vector<PadStrideInfo>::const_iterator _infos_it;
+        std::vector<Size2D>::const_iterator        _dilation_it;
     };
 
     iterator begin() const
     {
-        return iterator(_src_shapes.begin(), _weight_shapes.begin(), _infos.begin());
+        return iterator(_src_shapes.begin(), _weight_shapes.begin(), _infos.begin(), _dilations.begin());
     }
 
     int size() const
     {
-        return std::min(_src_shapes.size(), std::min(_weight_shapes.size(), _infos.size()));
+        return std::min(_src_shapes.size(), std::min(_weight_shapes.size(), std::min(_infos.size(), _dilations.size())));
     }
 
-    void add_config(TensorShape src, Size2D weights, PadStrideInfo info)
+    void add_config(TensorShape src, Size2D weights, PadStrideInfo info, Size2D dilation = Size2D(1U, 1U))
     {
         _src_shapes.emplace_back(std::move(src));
         _weight_shapes.emplace_back(std::move(weights));
         _infos.emplace_back(std::move(info));
+        _dilations.emplace_back(std::move(dilation));
     }
 
 protected:
@@ -105,6 +111,7 @@ private:
     std::vector<TensorShape>   _src_shapes{};
     std::vector<Size2D>        _weight_shapes{};
     std::vector<PadStrideInfo> _infos{};
+    std::vector<Size2D>        _dilations{};
 };
 
 /** Dataset containing small, generic depthwise convolution shapes. */
@@ -204,10 +211,15 @@ public:
     {
         // Stride 1
         add_config(TensorShape(7U, 7U, 16U), Size2D(3U, 3U), PadStrideInfo(1, 1, 0, 0, DimensionRoundingType::CEIL));
+        add_config(TensorShape(7U, 7U, 16U), Size2D(3U, 3U), PadStrideInfo(1, 1, 0, 0, DimensionRoundingType::CEIL), Size2D(2U, 2U));
         add_config(TensorShape(7U, 7U, 16U), Size2D(3U, 3U), PadStrideInfo(1, 1, 1, 1, DimensionRoundingType::CEIL));
+        add_config(TensorShape(7U, 7U, 16U), Size2D(3U, 3U), PadStrideInfo(1, 1, 2, 2, DimensionRoundingType::CEIL), Size2D(2U, 2U));
         // Stride 2
-        add_config(TensorShape(7U, 7U, 32U), Size2D(3U, 3U), PadStrideInfo(2, 2, 0, 0, DimensionRoundingType::CEIL));
-        add_config(TensorShape(7U, 7U, 32U), Size2D(3U, 3U), PadStrideInfo(2, 2, 1, 1, 1, 1, DimensionRoundingType::CEIL));
+        add_config(TensorShape(9U, 9U, 32U), Size2D(3U, 3U), PadStrideInfo(2, 2, 0, 0, DimensionRoundingType::CEIL));
+        add_config(TensorShape(9U, 9U, 32U), Size2D(3U, 3U), PadStrideInfo(2, 2, 0, 0, DimensionRoundingType::CEIL), Size2D(2U, 2U));
+        add_config(TensorShape(9U, 9U, 32U), Size2D(3U, 3U), PadStrideInfo(2, 2, 1, 1, DimensionRoundingType::CEIL));
+        // TODO(COMPMID-2464): Enable once dilated conv with stride 2 is supported
+        // add_config(TensorShape(9U, 9U, 1U), Size2D(3U, 3U), PadStrideInfo(2, 2, 2, 2, DimensionRoundingType::CEIL), Size2D(2U, 2U));
     }
 };
 /** Dataset containing optimized, 3x3 depthwise convolution shapes. */
@@ -229,6 +241,27 @@ public:
         add_config(TensorShape(8U, 8U, 32U), Size2D(3U, 3U), PadStrideInfo(2, 2, 0, 1, 0, 1, DimensionRoundingType::CEIL));
         add_config(TensorShape(8U, 8U, 33U), Size2D(3U, 3U), PadStrideInfo(2, 2, 0, 1, 0, 1, DimensionRoundingType::CEIL));
         add_config(TensorShape(64U, 64U, 128U), Size2D(3U, 3U), PadStrideInfo(2, 2, 0, 1, 0, 1, DimensionRoundingType::CEIL));
+    }
+};
+
+/** Dataset containing optimized, 5x5 depthwise convolution shapes. */
+class SmallOptimizedDepthwiseConvolutionLayerDataset5x5 final : public DepthwiseConvolutionLayerDataset
+{
+public:
+    SmallOptimizedDepthwiseConvolutionLayerDataset5x5()
+    {
+        // Stride 1
+        add_config(TensorShape(7U, 7U, 16U), Size2D(5U, 5U), PadStrideInfo(1, 1, 0, 0, DimensionRoundingType::CEIL));
+        add_config(TensorShape(11U, 11U, 16U), Size2D(5U, 5U), PadStrideInfo(1, 1, 0, 0, DimensionRoundingType::CEIL), Size2D(2U, 2U));
+        add_config(TensorShape(7U, 7U, 16U), Size2D(5U, 5U), PadStrideInfo(1, 1, 2, 2, DimensionRoundingType::CEIL));
+        add_config(TensorShape(7U, 7U, 16U), Size2D(5U, 5U), PadStrideInfo(1, 1, 4, 4, DimensionRoundingType::CEIL), Size2D(2U, 2U));
+        // Stride 2
+        add_config(TensorShape(9U, 9U, 32U), Size2D(5U, 5U), PadStrideInfo(2, 2, 0, 0, DimensionRoundingType::CEIL));
+        // TODO(COMPMID-2464): Enable once dilated conv with stride 2 is supported
+        // add_config(TensorShape(9U, 9U, 32U), Size2D(5U, 5U), PadStrideInfo(2, 2, 0, 0, DimensionRoundingType::CEIL), Size2D(2U, 2U));
+        add_config(TensorShape(9U, 9U, 32U), Size2D(5U, 5U), PadStrideInfo(2, 2, 2, 2, 2, 2, DimensionRoundingType::CEIL));
+        // TODO(COMPMID-2464): Enable once dilated conv with stride 2 is supported
+        // add_config(TensorShape(9U, 9U, 32U), Size2D(5U, 5U), PadStrideInfo(2, 2, 4, 4, 4, 4, DimensionRoundingType::CEIL), Size2D(2U, 2U));
     }
 };
 } // namespace datasets

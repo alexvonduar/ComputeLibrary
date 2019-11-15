@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,11 +62,12 @@ CLBuildOptions prepare_quantized_softmax_build_options(float input_scale, float 
 
     const double beta_multiplier = std::min(
                                        1.0 * beta * input_scale * (1 << (31 - scaled_diff_int_bits)),
-                                       (1ll << 31) - 1.0);
-    int input_beta_multiplier, input_beta_left_shift;
+                                       (1LL << 31) - 1.0);
+    int input_beta_multiplier;
+    int input_beta_left_shift;
     quantization::calculate_quantized_multiplier_greater_than_one(beta_multiplier, &input_beta_multiplier, &input_beta_left_shift);
 
-    const double max_input_rescaled = 1.0 * ((1 << scaled_diff_int_bits) - 1) * (1ll << (31 - scaled_diff_int_bits)) / (1ll << input_beta_left_shift);
+    const double max_input_rescaled = 1.0 * ((1 << scaled_diff_int_bits) - 1) * (1LL << (31 - scaled_diff_int_bits)) / (1LL << input_beta_left_shift);
     const int    diff_min           = -1.f * std::floor(max_input_rescaled);
 
     CLBuildOptions build_opts;
@@ -232,15 +233,16 @@ void CLLogits1DMaxShiftExpSumKernel::configure(const ICLTensor *input, ICLTensor
     _output = output;
     _sum    = sum;
 
-    const DataType dt                 = input->info()->data_type();
-    const size_t   reduction_dim_size = input->info()->dimension(0);
+    const DataType                dt                 = input->info()->data_type();
+    const UniformQuantizationInfo qinfo              = input->info()->quantization_info().uniform();
+    const size_t                  reduction_dim_size = input->info()->dimension(0);
 
     // Set build options
     CLBuildOptions build_opts;
     build_opts.add_option("-DDATA_TYPE=" + get_cl_type_from_data_type(dt));
     build_opts.add_option_if(dt == DataType::F16, "-DUSE_F16");
     build_opts.add_option_if(is_data_type_float(dt) && (beta != 1.0f), "-DBETA=" + float_to_string_with_full_precision(beta));
-    build_opts.add_options_if(is_data_type_quantized_asymmetric(dt), prepare_quantized_softmax_build_options(input->info()->quantization_info().scale, beta).options());
+    build_opts.add_options_if(is_data_type_quantized_asymmetric(dt), prepare_quantized_softmax_build_options(qinfo.scale, beta).options());
 
     cl::NDRange lws_hint(cl::NullRange);
     std::string kernel_name = is_data_type_quantized_asymmetric(dt) ? std::string("softmax_layer_max_shift_exp_sum_quantized_serial") :
@@ -337,9 +339,10 @@ void CLLogits1DNormKernel::configure(const ICLTensor *input, const ICLTensor *su
     ARM_COMPUTE_ERROR_ON_NULLPTR(input, sum, output);
 
     // Note: output should always have a scale of 1/256 and offset 0
-    const QuantizationInfo allowed_quantization_info = QuantizationInfo(1.f / 256, 0);
-    const bool             is_quantized_asymmetric   = (input->info()->data_type() == DataType::S32);
-    const DataType         output_data_type          = is_quantized_asymmetric ? DataType::QASYMM8 : input->info()->data_type();
+    const QuantizationInfo        allowed_quantization_info = QuantizationInfo(1.F / 256, 0);
+    const bool                    is_quantized_asymmetric   = (input->info()->data_type() == DataType::S32);
+    const DataType                output_data_type          = is_quantized_asymmetric ? DataType::QASYMM8 : input->info()->data_type();
+    const UniformQuantizationInfo qinfo                     = input->info()->quantization_info().uniform();
 
     // Output auto initialization if not yet initialized
     auto_init_if_empty(*output->info(),
@@ -356,7 +359,7 @@ void CLLogits1DNormKernel::configure(const ICLTensor *input, const ICLTensor *su
     CLBuildOptions build_opts;
     build_opts.add_option("-DDATA_TYPE=" + get_cl_type_from_data_type(input->info()->data_type()));
     build_opts.add_options_if(is_quantized_asymmetric,
-                              prepare_quantized_softmax_build_options(input->info()->quantization_info().scale, beta).options());
+                              prepare_quantized_softmax_build_options(qinfo.scale, beta).options());
 
     // Create kernel
     std::string kernel_name = is_quantized_asymmetric ? "softmax_layer_norm_quantized" : "softmax_layer_norm";

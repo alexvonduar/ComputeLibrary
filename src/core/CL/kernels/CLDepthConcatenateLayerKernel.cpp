@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,19 +47,13 @@ std::pair<Status, Window> validate_and_configure_window(ITensorInfo *input, unsi
 {
     ARM_COMPUTE_UNUSED(depth_offset);
 
-    // Configure kernel window
-    const int left_right = (output->dimension(0) - input->dimension(0)) / 2;
-    const int top_bottom = (output->dimension(1) - input->dimension(1)) / 2;
-
     const unsigned int num_elems_processed_per_iteration = 16 / input->element_size();
-    const unsigned int num_elems_read_per_iteration      = 16 / input->element_size();
-    const unsigned int num_rows_read_per_iteration       = 1;
 
     // The window needs to be based on input as we copy all the depths of input
     Window win = calculate_max_window(*output, Steps(num_elems_processed_per_iteration));
     win.set(Window::DimZ, Window::Dimension(0, input->tensor_shape().z(), 1));
 
-    AccessWindowRectangle  input_access(input, -left_right, -top_bottom, num_elems_read_per_iteration, num_rows_read_per_iteration);
+    AccessWindowHorizontal input_access(input, 0, num_elems_processed_per_iteration);
     AccessWindowHorizontal output_access(output, 0, num_elems_processed_per_iteration);
     bool                   window_changed = update_window_and_padding(win, input_access, output_access);
     output_access.set_valid_region(win, ValidRegion(Coordinates(), output->tensor_shape()));
@@ -74,28 +68,18 @@ Status validate_arguments(const ITensorInfo *input, unsigned int depth_offset, c
     ARM_COMPUTE_RETURN_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(input, 1, DataType::QASYMM8, DataType::F16, DataType::F32);
     ARM_COMPUTE_RETURN_ERROR_ON_MISMATCHING_DATA_TYPES(input, output);
 
+    ARM_COMPUTE_RETURN_ERROR_ON(input->dimension(Window::DimX) != output->dimension(Window::DimX));
+    ARM_COMPUTE_RETURN_ERROR_ON(input->dimension(Window::DimY) != output->dimension(Window::DimY));
     ARM_COMPUTE_RETURN_ERROR_ON(input->dimension(2) + depth_offset > output->dimension(2));
-    ARM_COMPUTE_RETURN_ERROR_ON(input->dimension(0) > output->dimension(0));
-    ARM_COMPUTE_RETURN_ERROR_ON(input->dimension(1) > output->dimension(1));
     ARM_COMPUTE_RETURN_ERROR_ON_MISMATCHING_SHAPES(3, input, output);
-
-    // The gaps between the two lowest dimensions of input and output need to be divisible by 2
-    // Otherwise it is not clear how the padding should be added onto the input tensor
-    ARM_COMPUTE_RETURN_ERROR_ON((output->dimension(0) - input->dimension(0)) % 2);
-    ARM_COMPUTE_RETURN_ERROR_ON((output->dimension(1) - input->dimension(1)) % 2);
 
     return Status{};
 }
 } // namespace
 
 CLDepthConcatenateLayerKernel::CLDepthConcatenateLayerKernel()
-    : _input(nullptr), _output(nullptr), _top_bottom(0), _left_right(0), _depth_offset(0)
+    : _input(nullptr), _output(nullptr), _depth_offset(0)
 {
-}
-
-BorderSize CLDepthConcatenateLayerKernel::border_size() const
-{
-    return BorderSize(_top_bottom, _left_right);
 }
 
 void CLDepthConcatenateLayerKernel::configure(const ICLTensor *input, unsigned int depth_offset, ICLTensor *output)
@@ -115,24 +99,26 @@ void CLDepthConcatenateLayerKernel::configure(const ICLTensor *input, unsigned i
     build_opts.add_option("-DVEC_SIZE=" + support::cpp11::to_string(num_elems_processed_per_iteration));
     if(is_data_type_quantized_asymmetric(input->info()->data_type()) && input->info()->quantization_info() != output->info()->quantization_info())
     {
-        build_opts.add_option("-DOFFSET_IN1=" + float_to_string_with_full_precision(input->info()->quantization_info().offset));
-        build_opts.add_option("-DOFFSET_OUT=" + float_to_string_with_full_precision(output->info()->quantization_info().offset));
-        build_opts.add_option("-DSCALE_IN1=" + float_to_string_with_full_precision(input->info()->quantization_info().scale));
-        build_opts.add_option("-DSCALE_OUT=" + float_to_string_with_full_precision(output->info()->quantization_info().scale));
+        const UniformQuantizationInfo iq_info = input->info()->quantization_info().uniform();
+        const UniformQuantizationInfo oq_info = output->info()->quantization_info().uniform();
+
+        build_opts.add_option("-DOFFSET_IN1=" + float_to_string_with_full_precision(iq_info.offset));
+        build_opts.add_option("-DOFFSET_OUT=" + float_to_string_with_full_precision(oq_info.offset));
+        build_opts.add_option("-DSCALE_IN1=" + float_to_string_with_full_precision(iq_info.scale));
+        build_opts.add_option("-DSCALE_OUT=" + float_to_string_with_full_precision(oq_info.scale));
     }
 
     // Create kernel
-    _kernel = static_cast<cl::Kernel>(CLKernelLibrary::get().create_kernel("concatenate_depth", build_opts.options()));
-
-    // Configure kernel window
-    _left_right = (output->info()->dimension(0) - input->info()->dimension(0)) / 2;
-    _top_bottom = (output->info()->dimension(1) - input->info()->dimension(1)) / 2;
+    _kernel = static_cast<cl::Kernel>(CLKernelLibrary::get().create_kernel("concatenate", build_opts.options()));
 
     // Configure kernel window
     auto win_config = validate_and_configure_window(input->info(), depth_offset, output->info());
     ARM_COMPUTE_ERROR_THROW_ON(std::get<0>(win_config));
 
     ICLKernel::configure_internal(std::get<1>(win_config));
+
+    // Set output valid region
+    output->info()->set_valid_region(ValidRegion(Coordinates(), output->info()->tensor_shape()));
 }
 
 Status CLDepthConcatenateLayerKernel::validate(const arm_compute::ITensorInfo *input,
@@ -153,16 +139,8 @@ void CLDepthConcatenateLayerKernel::run(const Window &window, cl::CommandQueue &
 
     const int offset_to_first_elements_in_bytes = _depth_offset * _output->info()->strides_in_bytes()[2];
 
-    unsigned int  idx = 2 * num_arguments_per_3D_tensor(); // Skip the input and output parameters
-    const cl_int3 offsets =
-    {
-        {
-            static_cast<cl_int>(_left_right),
-            static_cast<cl_int>(_top_bottom),
-            static_cast<cl_int>(offset_to_first_elements_in_bytes),
-        }
-    };
-    _kernel.setArg<cl_int3>(idx, offsets);
+    unsigned int idx = 2 * num_arguments_per_3D_tensor(); // Skip the input and output parameters
+    _kernel.setArg<cl_int>(idx, offset_to_first_elements_in_bytes);
 
     do
     {

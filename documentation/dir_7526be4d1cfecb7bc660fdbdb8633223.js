@@ -19,6 +19,7 @@ var dir_7526be4d1cfecb7bc660fdbdb8633223 =
       [ "DeconvolutionLayer", "classarm__compute_1_1graph_1_1frontend_1_1_deconvolution_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_deconvolution_layer" ],
       [ "DepthwiseConvolutionLayer", "classarm__compute_1_1graph_1_1frontend_1_1_depthwise_convolution_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_depthwise_convolution_layer" ],
       [ "DetectionOutputLayer", "classarm__compute_1_1graph_1_1frontend_1_1_detection_output_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_detection_output_layer" ],
+      [ "DetectionPostProcessLayer", "classarm__compute_1_1graph_1_1frontend_1_1_detection_post_process_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_detection_post_process_layer" ],
       [ "DummyLayer", "classarm__compute_1_1graph_1_1frontend_1_1_dummy_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_dummy_layer" ],
       [ "EltwiseLayer", "classarm__compute_1_1graph_1_1frontend_1_1_eltwise_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_eltwise_layer" ],
       [ "FlattenLayer", "classarm__compute_1_1graph_1_1frontend_1_1_flatten_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_flatten_layer" ],
@@ -30,6 +31,7 @@ var dir_7526be4d1cfecb7bc660fdbdb8633223 =
       [ "PermuteLayer", "classarm__compute_1_1graph_1_1frontend_1_1_permute_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_permute_layer" ],
       [ "PoolingLayer", "classarm__compute_1_1graph_1_1frontend_1_1_pooling_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_pooling_layer" ],
       [ "PriorBoxLayer", "classarm__compute_1_1graph_1_1frontend_1_1_prior_box_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_prior_box_layer" ],
+      [ "QuantizationLayer", "classarm__compute_1_1graph_1_1frontend_1_1_quantization_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_quantization_layer" ],
       [ "ReorgLayer", "classarm__compute_1_1graph_1_1frontend_1_1_reorg_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_reorg_layer" ],
       [ "ReshapeLayer", "classarm__compute_1_1graph_1_1frontend_1_1_reshape_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_reshape_layer" ],
       [ "ResizeLayer", "classarm__compute_1_1graph_1_1frontend_1_1_resize_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_resize_layer" ],
@@ -37,6 +39,7 @@ var dir_7526be4d1cfecb7bc660fdbdb8633223 =
       [ "ScaleLayer", "classarm__compute_1_1graph_1_1frontend_1_1_scale_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_scale_layer" ],
       [ "SliceLayer", "classarm__compute_1_1graph_1_1frontend_1_1_slice_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_slice_layer" ],
       [ "SoftmaxLayer", "classarm__compute_1_1graph_1_1frontend_1_1_softmax_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_softmax_layer" ],
+      [ "StackLayer", "classarm__compute_1_1graph_1_1frontend_1_1_stack_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_stack_layer" ],
       [ "UpsampleLayer", "classarm__compute_1_1graph_1_1frontend_1_1_upsample_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_upsample_layer" ],
       [ "YOLOLayer", "classarm__compute_1_1graph_1_1frontend_1_1_y_o_l_o_layer.xhtml", "classarm__compute_1_1graph_1_1frontend_1_1_y_o_l_o_layer" ]
     ] ],

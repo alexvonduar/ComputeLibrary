@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 ARM Limited.
+ * Copyright (c) 2016-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,10 +74,15 @@ void NEOpticalFlow::configure(const Pyramid *old_pyramid, const Pyramid *new_pyr
 
     const float pyr_scale = old_pyramid->info()->scale();
 
-    _func_scharr    = arm_compute::support::cpp14::make_unique<NEScharr3x3[]>(_num_levels);
-    _kernel_tracker = arm_compute::support::cpp14::make_unique<NELKTrackerKernel[]>(_num_levels);
-    _scharr_gx      = arm_compute::support::cpp14::make_unique<Tensor[]>(_num_levels);
-    _scharr_gy      = arm_compute::support::cpp14::make_unique<Tensor[]>(_num_levels);
+    _func_scharr.clear();
+    _kernel_tracker.clear();
+    _scharr_gx.clear();
+    _scharr_gy.clear();
+
+    _func_scharr.resize(_num_levels);
+    _kernel_tracker.resize(_num_levels);
+    _scharr_gx.resize(_num_levels);
+    _scharr_gy.resize(_num_levels);
 
     _old_points_internal = LKInternalKeypointArray(old_points->num_values());
     _new_points_internal = LKInternalKeypointArray(old_points->num_values());
@@ -99,14 +104,14 @@ void NEOpticalFlow::configure(const Pyramid *old_pyramid, const Pyramid *new_pyr
         _scharr_gy[i].allocator()->init(tensor_info);
 
         // Manage intermediate buffers
-        _memory_group.manage(_scharr_gx.get() + i);
-        _memory_group.manage(_scharr_gy.get() + i);
+        _memory_group.manage(&_scharr_gx[i]);
+        _memory_group.manage(&_scharr_gy[i]);
 
         // Init Scharr kernel
-        _func_scharr[i].configure(old_ith_input, _scharr_gx.get() + i, _scharr_gy.get() + i, border_mode, constant_border_value);
+        _func_scharr[i].configure(old_ith_input, &_scharr_gx[i], &_scharr_gy[i], border_mode, constant_border_value);
 
         // Init Lucas-Kanade kernel
-        _kernel_tracker[i].configure(old_ith_input, new_ith_input, _scharr_gx.get() + i, _scharr_gy.get() + i,
+        _kernel_tracker[i].configure(old_ith_input, new_ith_input, &_scharr_gx[i], &_scharr_gy[i],
                                      old_points, new_points_estimates, new_points,
                                      &_old_points_internal, &_new_points_internal,
                                      termination, use_initial_estimate, epsilon, num_iterations, window_dimension,
@@ -121,7 +126,7 @@ void NEOpticalFlow::run()
 {
     ARM_COMPUTE_ERROR_ON_MSG(_num_levels == 0, "Unconfigured function");
 
-    _memory_group.acquire();
+    MemoryGroupResourceScope scope_mg(_memory_group);
 
     for(unsigned int level = _num_levels; level > 0; --level)
     {
@@ -129,8 +134,6 @@ void NEOpticalFlow::run()
         _func_scharr[level - 1].run();
 
         // Run Lucas-Kanade kernel
-        NEScheduler::get().schedule(_kernel_tracker.get() + level - 1, Window::DimX);
+        NEScheduler::get().schedule(&_kernel_tracker[level - 1], Window::DimX);
     }
-
-    _memory_group.release();
 }

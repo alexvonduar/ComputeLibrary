@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 ARM Limited.
+ * Copyright (c) 2016-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,12 +126,18 @@ void NEHOGMultiDetection::configure(ITensor *input, const IMultiHOG *multi_hog, 
     _num_block_norm_kernel  = input_block_norm.size(); // Number of NEHOGBlockNormalizationKernel kernels to compute
     _num_hog_detect_kernel  = input_hog_detect.size(); // Number of NEHOGDetector functions to compute
 
-    _orient_bin_kernel = arm_compute::support::cpp14::make_unique<NEHOGOrientationBinningKernel[]>(_num_orient_bin_kernel);
-    _block_norm_kernel = arm_compute::support::cpp14::make_unique<NEHOGBlockNormalizationKernel[]>(_num_block_norm_kernel);
-    _hog_detect_kernel = arm_compute::support::cpp14::make_unique<NEHOGDetector[]>(_num_hog_detect_kernel);
-    _non_maxima_kernel = arm_compute::support::cpp14::make_unique<CPPDetectionWindowNonMaximaSuppressionKernel>();
-    _hog_space         = arm_compute::support::cpp14::make_unique<Tensor[]>(_num_orient_bin_kernel);
-    _hog_norm_space    = arm_compute::support::cpp14::make_unique<Tensor[]>(_num_block_norm_kernel);
+    _orient_bin_kernel.clear();
+    _block_norm_kernel.clear();
+    _hog_detect_kernel.clear();
+    _hog_space.clear();
+    _hog_norm_space.clear();
+
+    _orient_bin_kernel.resize(_num_orient_bin_kernel);
+    _block_norm_kernel.resize(_num_block_norm_kernel);
+    _hog_detect_kernel.resize(_num_hog_detect_kernel);
+    _hog_space.resize(_num_orient_bin_kernel);
+    _hog_norm_space.resize(_num_block_norm_kernel);
+    _non_maxima_kernel = CPPDetectionWindowNonMaximaSuppressionKernel();
 
     // Allocate tensors for magnitude and phase
     TensorInfo info_mag(shape_img, Format::S16);
@@ -170,10 +176,10 @@ void NEHOGMultiDetection::configure(ITensor *input, const IMultiHOG *multi_hog, 
         _hog_space[i].allocator()->init(info_space);
 
         // Manage intermediate buffers
-        _memory_group.manage(_hog_space.get() + i);
+        _memory_group.manage(&_hog_space[i]);
 
         // Initialise orientation binning kernel
-        _orient_bin_kernel[i].configure(&_mag, &_phase, _hog_space.get() + i, multi_hog->model(idx_multi_hog)->info());
+        _orient_bin_kernel[i].configure(&_mag, &_phase, &_hog_space[i], multi_hog->model(idx_multi_hog)->info());
     }
 
     // Allocate intermediate tensors
@@ -191,10 +197,10 @@ void NEHOGMultiDetection::configure(ITensor *input, const IMultiHOG *multi_hog, 
         _hog_norm_space[i].allocator()->init(tensor_info);
 
         // Manage intermediate buffers
-        _memory_group.manage(_hog_norm_space.get() + i);
+        _memory_group.manage(&_hog_norm_space[i]);
 
         // Initialize block normalization kernel
-        _block_norm_kernel[i].configure(_hog_space.get() + idx_orient_bin, _hog_norm_space.get() + i, multi_hog->model(idx_multi_hog)->info());
+        _block_norm_kernel[i].configure(&_hog_space[idx_orient_bin], &_hog_norm_space[i], multi_hog->model(idx_multi_hog)->info());
     }
 
     // Allocate intermediate tensors
@@ -208,11 +214,11 @@ void NEHOGMultiDetection::configure(ITensor *input, const IMultiHOG *multi_hog, 
     {
         const size_t idx_block_norm = input_hog_detect[i];
 
-        _hog_detect_kernel[i].configure(_hog_norm_space.get() + idx_block_norm, multi_hog->model(i), detection_windows, detection_window_strides->at(i), threshold, i);
+        _hog_detect_kernel[i].configure(&_hog_norm_space[idx_block_norm], multi_hog->model(i), detection_windows, detection_window_strides->at(i), threshold, i);
     }
 
     // Configure non maxima suppression kernel
-    _non_maxima_kernel->configure(_detection_windows, min_distance);
+    _non_maxima_kernel.configure(_detection_windows, min_distance);
 
     // Allocate intermediate tensors
     for(size_t i = 0; i < _num_block_norm_kernel; ++i)
@@ -225,7 +231,7 @@ void NEHOGMultiDetection::run()
 {
     ARM_COMPUTE_ERROR_ON_MSG(_detection_windows == nullptr, "Unconfigured function");
 
-    _memory_group.acquire();
+    MemoryGroupResourceScope scope_mg(_memory_group);
 
     // Reset detection window
     _detection_windows->clear();
@@ -234,28 +240,26 @@ void NEHOGMultiDetection::run()
     _gradient_kernel.run();
 
     // Run orientation binning kernel
-    for(size_t i = 0; i < _num_orient_bin_kernel; ++i)
+    for(auto &kernel : _orient_bin_kernel)
     {
-        NEScheduler::get().schedule(_orient_bin_kernel.get() + i, Window::DimY);
+        NEScheduler::get().schedule(&kernel, Window::DimY);
     }
 
     // Run block normalization kernel
-    for(size_t i = 0; i < _num_block_norm_kernel; ++i)
+    for(auto &kernel : _block_norm_kernel)
     {
-        NEScheduler::get().schedule(_block_norm_kernel.get() + i, Window::DimY);
+        NEScheduler::get().schedule(&kernel, Window::DimY);
     }
 
     // Run HOG detector kernel
-    for(size_t i = 0; i < _num_hog_detect_kernel; ++i)
+    for(auto &kernel : _hog_detect_kernel)
     {
-        _hog_detect_kernel[i].run();
+        kernel.run();
     }
 
     // Run non-maxima suppression kernel if enabled
     if(_non_maxima_suppression)
     {
-        NEScheduler::get().schedule(_non_maxima_kernel.get(), Window::DimY);
+        NEScheduler::get().schedule(&_non_maxima_kernel, Window::DimY);
     }
-
-    _memory_group.release();
 }

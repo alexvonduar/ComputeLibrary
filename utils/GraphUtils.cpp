@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,8 +77,8 @@ void TFPreproccessor::preprocess(ITensor &tensor)
     });
 }
 
-CaffePreproccessor::CaffePreproccessor(std::array<float, 3> mean, float scale, bool bgr)
-    : _mean(mean), _scale(scale), _bgr(bgr)
+CaffePreproccessor::CaffePreproccessor(std::array<float, 3> mean, bool bgr, float scale)
+    : _mean(mean), _bgr(bgr), _scale(scale)
 {
     if(_bgr)
     {
@@ -140,12 +140,14 @@ bool DummyAccessor::access_tensor(ITensor &tensor)
     return ret;
 }
 
-NumPyAccessor::NumPyAccessor(std::string npy_path, TensorShape shape, DataType data_type, std::ostream &output_stream)
+NumPyAccessor::NumPyAccessor(std::string npy_path, TensorShape shape, DataType data_type, DataLayout data_layout, std::ostream &output_stream)
     : _npy_tensor(), _filename(std::move(npy_path)), _output_stream(output_stream)
 {
-    NumPyBinLoader loader(_filename);
+    NumPyBinLoader loader(_filename, data_layout);
 
     TensorInfo info(shape, 1, data_type);
+    info.set_data_layout(data_layout);
+
     _npy_tensor.allocator()->init(info);
     _npy_tensor.allocator()->allocate();
 
@@ -153,28 +155,47 @@ NumPyAccessor::NumPyAccessor(std::string npy_path, TensorShape shape, DataType d
 }
 
 template <typename T>
-void NumPyAccessor::access_numpy_tensor(ITensor &tensor)
+void NumPyAccessor::access_numpy_tensor(ITensor &tensor, T tolerance)
 {
     const int num_elements          = tensor.info()->tensor_shape().total_size();
-    int       num_mismatches        = utils::compare_tensor<T>(tensor, _npy_tensor);
+    int       num_mismatches        = utils::compare_tensor<T>(tensor, _npy_tensor, tolerance);
     float     percentage_mismatches = static_cast<float>(num_mismatches) / num_elements;
 
     _output_stream << "Results: " << 100.f - (percentage_mismatches * 100) << " % matches with the provided output[" << _filename << "]." << std::endl;
+    _output_stream << "         " << num_elements - num_mismatches << " out of " << num_elements << " matches with the provided output[" << _filename << "]." << std::endl
+                   << std::endl;
 }
 
 bool NumPyAccessor::access_tensor(ITensor &tensor)
 {
-    ARM_COMPUTE_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(&tensor, 1, DataType::F32);
+    ARM_COMPUTE_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(&tensor, 1, DataType::F32, DataType::QASYMM8);
     ARM_COMPUTE_ERROR_ON(_npy_tensor.info()->dimension(0) != tensor.info()->dimension(0));
 
     switch(tensor.info()->data_type())
     {
+        case DataType::QASYMM8:
+            access_numpy_tensor<qasymm8_t>(tensor, 0);
+            break;
         case DataType::F32:
-            access_numpy_tensor<float>(tensor);
+            access_numpy_tensor<float>(tensor, 0.0001f);
             break;
         default:
             ARM_COMPUTE_ERROR("NOT SUPPORTED!");
     }
+
+    return false;
+}
+
+SaveNumPyAccessor::SaveNumPyAccessor(std::string npy_name, const bool is_fortran)
+    : _npy_name(std::move(npy_name)), _is_fortran(is_fortran)
+{
+}
+
+bool SaveNumPyAccessor::access_tensor(ITensor &tensor)
+{
+    ARM_COMPUTE_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(&tensor, 1, DataType::F32);
+
+    utils::save_to_npy(tensor, _npy_name, _is_fortran);
 
     return false;
 }
@@ -604,6 +625,7 @@ bool RandomAccessor::access_tensor(ITensor &tensor)
 {
     switch(tensor.info()->data_type())
     {
+        case DataType::QASYMM8:
         case DataType::U8:
         {
             std::uniform_int_distribution<uint8_t> distribution_u8(_lower.get<uint8_t>(), _upper.get<uint8_t>());
@@ -654,7 +676,7 @@ bool RandomAccessor::access_tensor(ITensor &tensor)
         }
         case DataType::F16:
         {
-            std::uniform_real_distribution<float> distribution_f16(_lower.get<float>(), _upper.get<float>());
+            std::uniform_real_distribution<float> distribution_f16(_lower.get<half>(), _upper.get<half>());
             fill<half>(tensor, distribution_f16);
             break;
         }

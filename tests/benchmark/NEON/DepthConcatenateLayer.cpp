@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@
  */
 #include "arm_compute/core/TensorShape.h"
 #include "arm_compute/core/Types.h"
-#include "arm_compute/runtime/NEON/functions/NEDepthConcatenateLayer.h"
+#include "arm_compute/runtime/NEON/functions/NEConcatenateLayer.h"
 #include "arm_compute/runtime/Tensor.h"
 #include "arm_compute/runtime/TensorAllocator.h"
 #include "tests/NEON/Accessor.h"
@@ -44,16 +44,16 @@ namespace
 const auto data_types = framework::dataset::make("DataType", { DataType::F16, DataType::F32 });
 } // namespace
 
-using NEDepthConcatenateLayerFixture = DepthConcatenateLayerFixture<Tensor, ITensor, NEDepthConcatenateLayer, Accessor>;
+using NEDepthConcatenateLayerFixture = DepthConcatenateLayerFixture<Tensor, ITensor, NEConcatenateLayer, Accessor>;
 
-TEST_SUITE(NE)
+TEST_SUITE(NEON)
 TEST_SUITE(DepthConcatenateLayer)
 
-REGISTER_FIXTURE_DATA_TEST_CASE(RunSmall, NEDepthConcatenateLayerFixture, framework::DatasetMode::PRECOMMIT, framework::dataset::combine(datasets::Small2DShapes(), data_types));
-REGISTER_FIXTURE_DATA_TEST_CASE(RunLarge, NEDepthConcatenateLayerFixture, framework::DatasetMode::NIGHTLY, framework::dataset::combine(datasets::DepthConcatenateLayerShapes(), data_types));
+REGISTER_FIXTURE_DATA_TEST_CASE(RunSmall, NEDepthConcatenateLayerFixture, framework::DatasetMode::PRECOMMIT, framework::dataset::combine(datasets::Small3DShapes(), data_types));
+REGISTER_FIXTURE_DATA_TEST_CASE(RunLarge, NEDepthConcatenateLayerFixture, framework::DatasetMode::NIGHTLY, framework::dataset::combine(datasets::ConcatenateLayerShapes(), data_types));
 
-TEST_SUITE_END()
-TEST_SUITE_END()
+TEST_SUITE_END() // DepthConcatenateLayer
+TEST_SUITE_END() // NEON
 } // namespace benchmark
 } // namespace test
 } // namespace arm_compute

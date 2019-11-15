@@ -47,7 +47,14 @@ Status validate_arguments(const ITensorInfo *input, const ITensorInfo *output, u
 {
     ARM_COMPUTE_RETURN_ERROR_ON_NULLPTR(input, output);
     ARM_COMPUTE_RETURN_ERROR_ON_F16_UNSUPPORTED(input);
-    ARM_COMPUTE_RETURN_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(input, 1, DataType::QASYMM8, DataType::F16, DataType::F32);
+    if(input->num_channels() == 1)
+    {
+        ARM_COMPUTE_RETURN_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(input, 1, DataType::QASYMM8, DataType::S32, DataType::F16, DataType::F32);
+    }
+    else
+    {
+        ARM_COMPUTE_RETURN_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(input, 2, DataType::F32);
+    }
     ARM_COMPUTE_RETURN_ERROR_ON_MSG(op == ReductionOperation::SUM_SQUARE && input->data_type() == DataType::QASYMM8, "Not supported reduction operation for QASYMM8");
     ARM_COMPUTE_RETURN_ERROR_ON_MSG(axis >= TensorShape::num_max_dimensions, "Reduction axis greater than max number of dimensions");
     ARM_COMPUTE_RETURN_ERROR_ON_MSG(axis > 3, "Unsupported reduction axis");
@@ -55,7 +62,6 @@ Status validate_arguments(const ITensorInfo *input, const ITensorInfo *output, u
 
     if(output->total_size() != 0)
     {
-        ARM_COMPUTE_RETURN_ERROR_ON_MISMATCHING_DATA_LAYOUT(input, output);
         if(op == ReductionOperation::ARG_IDX_MAX || op == ReductionOperation::ARG_IDX_MIN)
         {
             ARM_COMPUTE_RETURN_ERROR_ON_MSG(input->data_type() == DataType::QASYMM8, "Not supported operation for QASYMM8");
@@ -78,12 +84,13 @@ std::tuple<Status, Window> validate_and_configure_window(ITensorInfo *input, ITe
     output_shape.set(axis, 1);
     const bool is_arg_min_max   = (op == ReductionOperation::ARG_IDX_MIN || op == ReductionOperation::ARG_IDX_MAX);
     DataType   output_data_type = is_arg_min_max ? DataType::U32 : input->data_type();
-    auto_init_if_empty(*output, output_shape, 1, output_data_type, input->quantization_info());
+    auto_init_if_empty(*output, input->clone()->set_tensor_shape(output_shape).set_data_type(output_data_type).reset_padding().set_is_resizable(true));
 
     const unsigned int num_elems_processed_per_iteration = (is_data_type_quantized(input->data_type()) && (axis == 0)) ? 1 : 16;
     Window             win                               = calculate_max_window(*input, Steps(num_elems_processed_per_iteration));
     bool               window_changed                    = false;
-    const bool         is_serial_op                      = (op == ReductionOperation::ARG_IDX_MAX || op == ReductionOperation::ARG_IDX_MIN || is_data_type_quantized(input->data_type()));
+    const bool         is_serial_op                      = (op == ReductionOperation::ARG_IDX_MAX || op == ReductionOperation::ARG_IDX_MIN || op == ReductionOperation::MIN
+                                                            || op == ReductionOperation::MAX || is_data_type_quantized(input->data_type()));
 
     switch(axis)
     {
@@ -154,13 +161,18 @@ void CLReductionOperationKernel::configure(const ICLTensor *input, ICLTensor *ou
     {
         data_type_promoted = "uint";
     }
+
     build_opts.add_option("-DDATA_TYPE=" + get_cl_type_from_data_type(input->info()->data_type()));
     build_opts.add_option("-DDATA_TYPE_PROMOTED=" + data_type_promoted);
+    build_opts.add_option_if(is_data_type_float(input->info()->data_type()), "-DFLOAT_DATA_TYPE");
     build_opts.add_option_if(op == ReductionOperation::SUM_SQUARE, "-DSUM_SQUARE");
     build_opts.add_option_if(op == ReductionOperation::MEAN_SUM, "-DMEAN");
     build_opts.add_option_if(op == ReductionOperation::ARG_IDX_MAX, "-DARG_MAX");
     build_opts.add_option_if(op == ReductionOperation::ARG_IDX_MIN, "-DARG_MIN");
     build_opts.add_option_if(op == ReductionOperation::PROD, "-DPROD");
+    build_opts.add_option_if(op == ReductionOperation::MIN, "-DMIN");
+    build_opts.add_option_if(op == ReductionOperation::MAX, "-DMAX");
+    build_opts.add_option_if(input->info()->num_channels() == 2, "-DCOMPLEX");
 
     switch(op)
     {
@@ -173,6 +185,8 @@ void CLReductionOperationKernel::configure(const ICLTensor *input, ICLTensor *ou
             break;
         case ReductionOperation::ARG_IDX_MAX:
         case ReductionOperation::ARG_IDX_MIN:
+        case ReductionOperation::MIN:
+        case ReductionOperation::MAX:
             break;
         case ReductionOperation::PROD:
             build_opts.add_option(("-DOPERATION=product"));
@@ -184,7 +198,8 @@ void CLReductionOperationKernel::configure(const ICLTensor *input, ICLTensor *ou
     // Create kernel
     cl::NDRange lws_hint = CLKernelLibrary::get().default_ndrange();
     std::string kernel_axis_name;
-    const bool  is_serial_op = (op == ReductionOperation::ARG_IDX_MAX || op == ReductionOperation::ARG_IDX_MIN || is_data_type_quantized(input->info()->data_type()));
+    const bool  is_serial_op = (op == ReductionOperation::ARG_IDX_MAX || op == ReductionOperation::ARG_IDX_MIN || op == ReductionOperation::MIN || op == ReductionOperation::MAX
+                                || is_data_type_quantized(input->info()->data_type()));
     switch(axis)
     {
         case 0:
@@ -192,7 +207,7 @@ void CLReductionOperationKernel::configure(const ICLTensor *input, ICLTensor *ou
             if(is_serial_op)
             {
                 build_opts.add_option("-DWIDTH=" + support::cpp11::to_string(input->info()->dimension(0)));
-                build_opts.add_option_if_else(_input->info()->data_type() == DataType::F32, "-DCOND_DATA_TYPE=int", "-DCOND_DATA_TYPE=short");
+                build_opts.add_option_if_else(_input->info()->data_type() == DataType::F16, "-DCOND_DATA_TYPE=short", "-DCOND_DATA_TYPE=int");
                 kernel_axis_name = "non_parallel_x";
             }
             else
@@ -249,7 +264,8 @@ void CLReductionOperationKernel::run(const Window &window, cl::CommandQueue &que
     ARM_COMPUTE_ERROR_ON_UNCONFIGURED_KERNEL(this);
     ARM_COMPUTE_ERROR_ON_INVALID_SUBWINDOW(IKernel::window(), window);
 
-    const bool is_serial_op = (_op == ReductionOperation::ARG_IDX_MAX || _op == ReductionOperation::ARG_IDX_MIN || is_data_type_quantized(_input->info()->data_type()));
+    const bool is_serial_op = (_op == ReductionOperation::ARG_IDX_MAX || _op == ReductionOperation::ARG_IDX_MIN || _op == ReductionOperation::MIN || _op == ReductionOperation::MAX
+                               || is_data_type_quantized(_input->info()->data_type()));
     switch(_reduction_axis)
     {
         case 0:

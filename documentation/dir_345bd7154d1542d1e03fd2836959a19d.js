@@ -24,6 +24,9 @@ var dir_345bd7154d1542d1e03fd2836959a19d =
     [ "NEBatchNormalizationLayer.h", "_n_e_batch_normalization_layer_8h.xhtml", [
       [ "NEBatchNormalizationLayer", "classarm__compute_1_1_n_e_batch_normalization_layer.xhtml", "classarm__compute_1_1_n_e_batch_normalization_layer" ]
     ] ],
+    [ "NEBatchToSpaceLayer.h", "_n_e_batch_to_space_layer_8h.xhtml", [
+      [ "NEBatchToSpaceLayer", "classarm__compute_1_1_n_e_batch_to_space_layer.xhtml", "classarm__compute_1_1_n_e_batch_to_space_layer" ]
+    ] ],
     [ "NEBitwiseAnd.h", "_n_e_bitwise_and_8h.xhtml", [
       [ "NEBitwiseAnd", "classarm__compute_1_1_n_e_bitwise_and.xhtml", "classarm__compute_1_1_n_e_bitwise_and" ]
     ] ],
@@ -41,6 +44,9 @@ var dir_345bd7154d1542d1e03fd2836959a19d =
     ] ],
     [ "NECannyEdge.h", "_n_e_canny_edge_8h.xhtml", [
       [ "NECannyEdge", "classarm__compute_1_1_n_e_canny_edge.xhtml", "classarm__compute_1_1_n_e_canny_edge" ]
+    ] ],
+    [ "NECast.h", "_n_e_cast_8h.xhtml", [
+      [ "NECast", "classarm__compute_1_1_n_e_cast.xhtml", "classarm__compute_1_1_n_e_cast" ]
     ] ],
     [ "NEChannelCombine.h", "_n_e_channel_combine_8h.xhtml", [
       [ "NEChannelCombine", "classarm__compute_1_1_n_e_channel_combine.xhtml", "classarm__compute_1_1_n_e_channel_combine" ]
@@ -70,17 +76,21 @@ var dir_345bd7154d1542d1e03fd2836959a19d =
     [ "NECopy.h", "_n_e_copy_8h.xhtml", [
       [ "NECopy", "classarm__compute_1_1_n_e_copy.xhtml", "classarm__compute_1_1_n_e_copy" ]
     ] ],
+    [ "NECropResize.h", "_n_e_crop_resize_8h.xhtml", [
+      [ "NECropResize", "classarm__compute_1_1_n_e_crop_resize.xhtml", "classarm__compute_1_1_n_e_crop_resize" ]
+    ] ],
     [ "NEDeconvolutionLayer.h", "_n_e_deconvolution_layer_8h.xhtml", [
       [ "NEDeconvolutionLayer", "classarm__compute_1_1_n_e_deconvolution_layer.xhtml", "classarm__compute_1_1_n_e_deconvolution_layer" ]
-    ] ],
-    [ "NEDepthConcatenateLayer.h", "_n_e_depth_concatenate_layer_8h.xhtml", [
-      [ "NEDepthConcatenateLayer", "classarm__compute_1_1_n_e_depth_concatenate_layer.xhtml", "classarm__compute_1_1_n_e_depth_concatenate_layer" ]
     ] ],
     [ "NEDepthConvertLayer.h", "_n_e_depth_convert_layer_8h.xhtml", [
       [ "NEDepthConvertLayer", "classarm__compute_1_1_n_e_depth_convert_layer.xhtml", "classarm__compute_1_1_n_e_depth_convert_layer" ]
     ] ],
+    [ "NEDepthToSpaceLayer.h", "_n_e_depth_to_space_layer_8h.xhtml", [
+      [ "NEDepthToSpaceLayer", "classarm__compute_1_1_n_e_depth_to_space_layer.xhtml", "classarm__compute_1_1_n_e_depth_to_space_layer" ]
+    ] ],
     [ "NEDepthwiseConvolutionLayer.h", "_n_e_depthwise_convolution_layer_8h.xhtml", [
       [ "NEDepthwiseConvolutionLayer3x3", "classarm__compute_1_1_n_e_depthwise_convolution_layer3x3.xhtml", "classarm__compute_1_1_n_e_depthwise_convolution_layer3x3" ],
+      [ "NEDepthwiseConvolutionLayerOptimized", "classarm__compute_1_1_n_e_depthwise_convolution_layer_optimized.xhtml", "classarm__compute_1_1_n_e_depthwise_convolution_layer_optimized" ],
       [ "NEDepthwiseConvolutionLayer", "classarm__compute_1_1_n_e_depthwise_convolution_layer.xhtml", "classarm__compute_1_1_n_e_depthwise_convolution_layer" ]
     ] ],
     [ "NEDepthwiseSeparableConvolutionLayer.h", "_n_e_depthwise_separable_convolution_layer_8h.xhtml", [
@@ -101,7 +111,12 @@ var dir_345bd7154d1542d1e03fd2836959a19d =
     [ "NEElementwiseOperations.h", "_n_e_elementwise_operations_8h.xhtml", "_n_e_elementwise_operations_8h" ],
     [ "NEElementwiseUnaryLayer.h", "_n_e_elementwise_unary_layer_8h.xhtml", [
       [ "NERsqrtLayer", "classarm__compute_1_1_n_e_rsqrt_layer.xhtml", "classarm__compute_1_1_n_e_rsqrt_layer" ],
-      [ "NEExpLayer", "classarm__compute_1_1_n_e_exp_layer.xhtml", "classarm__compute_1_1_n_e_exp_layer" ]
+      [ "NEExpLayer", "classarm__compute_1_1_n_e_exp_layer.xhtml", "classarm__compute_1_1_n_e_exp_layer" ],
+      [ "NENegLayer", "classarm__compute_1_1_n_e_neg_layer.xhtml", "classarm__compute_1_1_n_e_neg_layer" ],
+      [ "NELogLayer", "classarm__compute_1_1_n_e_log_layer.xhtml", "classarm__compute_1_1_n_e_log_layer" ],
+      [ "NEAbsLayer", "classarm__compute_1_1_n_e_abs_layer.xhtml", "classarm__compute_1_1_n_e_abs_layer" ],
+      [ "NERoundLayer", "classarm__compute_1_1_n_e_round_layer.xhtml", "classarm__compute_1_1_n_e_round_layer" ],
+      [ "NESinLayer", "classarm__compute_1_1_n_e_sin_layer.xhtml", "classarm__compute_1_1_n_e_sin_layer" ]
     ] ],
     [ "NEEqualizeHistogram.h", "_n_e_equalize_histogram_8h.xhtml", [
       [ "NEEqualizeHistogram", "classarm__compute_1_1_n_e_equalize_histogram.xhtml", "classarm__compute_1_1_n_e_equalize_histogram" ]
@@ -111,6 +126,15 @@ var dir_345bd7154d1542d1e03fd2836959a19d =
     ] ],
     [ "NEFastCorners.h", "_n_e_fast_corners_8h.xhtml", [
       [ "NEFastCorners", "classarm__compute_1_1_n_e_fast_corners.xhtml", "classarm__compute_1_1_n_e_fast_corners" ]
+    ] ],
+    [ "NEFFT1D.h", "_n_e_f_f_t1_d_8h.xhtml", [
+      [ "NEFFT1D", "classarm__compute_1_1_n_e_f_f_t1_d.xhtml", "classarm__compute_1_1_n_e_f_f_t1_d" ]
+    ] ],
+    [ "NEFFT2D.h", "_n_e_f_f_t2_d_8h.xhtml", [
+      [ "NEFFT2D", "classarm__compute_1_1_n_e_f_f_t2_d.xhtml", "classarm__compute_1_1_n_e_f_f_t2_d" ]
+    ] ],
+    [ "NEFFTConvolutionLayer.h", "_n_e_f_f_t_convolution_layer_8h.xhtml", [
+      [ "NEFFTConvolutionLayer", "classarm__compute_1_1_n_e_f_f_t_convolution_layer.xhtml", "classarm__compute_1_1_n_e_f_f_t_convolution_layer" ]
     ] ],
     [ "NEFillBorder.h", "_n_e_fill_border_8h.xhtml", [
       [ "NEFillBorder", "classarm__compute_1_1_n_e_fill_border.xhtml", "classarm__compute_1_1_n_e_fill_border" ]
@@ -164,7 +188,8 @@ var dir_345bd7154d1542d1e03fd2836959a19d =
     ] ],
     [ "NEGEMMLowpOutputStage.h", "_n_e_g_e_m_m_lowp_output_stage_8h.xhtml", [
       [ "NEGEMMLowpQuantizeDownInt32ToUint8Scale", "classarm__compute_1_1_n_e_g_e_m_m_lowp_quantize_down_int32_to_uint8_scale.xhtml", "classarm__compute_1_1_n_e_g_e_m_m_lowp_quantize_down_int32_to_uint8_scale" ],
-      [ "NEGEMMLowpQuantizeDownInt32ToUint8ScaleByFixedPoint", "classarm__compute_1_1_n_e_g_e_m_m_lowp_quantize_down_int32_to_uint8_scale_by_fixed_point.xhtml", "classarm__compute_1_1_n_e_g_e_m_m_lowp_quantize_down_int32_to_uint8_scale_by_fixed_point" ]
+      [ "NEGEMMLowpQuantizeDownInt32ToUint8ScaleByFixedPoint", "classarm__compute_1_1_n_e_g_e_m_m_lowp_quantize_down_int32_to_uint8_scale_by_fixed_point.xhtml", "classarm__compute_1_1_n_e_g_e_m_m_lowp_quantize_down_int32_to_uint8_scale_by_fixed_point" ],
+      [ "NEGEMMLowpQuantizeDownInt32ToInt16ScaleByFixedPoint", "classarm__compute_1_1_n_e_g_e_m_m_lowp_quantize_down_int32_to_int16_scale_by_fixed_point.xhtml", "classarm__compute_1_1_n_e_g_e_m_m_lowp_quantize_down_int32_to_int16_scale_by_fixed_point" ]
     ] ],
     [ "NEGEMMTranspose1xW.h", "_n_e_g_e_m_m_transpose1x_w_8h.xhtml", [
       [ "NEGEMMTranspose1xW", "classarm__compute_1_1_n_e_g_e_m_m_transpose1x_w.xhtml", "classarm__compute_1_1_n_e_g_e_m_m_transpose1x_w" ]
@@ -208,11 +233,17 @@ var dir_345bd7154d1542d1e03fd2836959a19d =
     [ "NELSTMLayer.h", "_n_e_l_s_t_m_layer_8h.xhtml", [
       [ "NELSTMLayer", "classarm__compute_1_1_n_e_l_s_t_m_layer.xhtml", "classarm__compute_1_1_n_e_l_s_t_m_layer" ]
     ] ],
+    [ "NELSTMLayerQuantized.h", "_n_e_l_s_t_m_layer_quantized_8h.xhtml", [
+      [ "NELSTMLayerQuantized", "classarm__compute_1_1_n_e_l_s_t_m_layer_quantized.xhtml", "classarm__compute_1_1_n_e_l_s_t_m_layer_quantized" ]
+    ] ],
     [ "NEMagnitude.h", "_n_e_magnitude_8h.xhtml", [
       [ "NEMagnitude", "classarm__compute_1_1_n_e_magnitude.xhtml", "classarm__compute_1_1_n_e_magnitude" ]
     ] ],
     [ "NEMeanStdDev.h", "_n_e_mean_std_dev_8h.xhtml", [
       [ "NEMeanStdDev", "classarm__compute_1_1_n_e_mean_std_dev.xhtml", "classarm__compute_1_1_n_e_mean_std_dev" ]
+    ] ],
+    [ "NEMeanStdDevNormalizationLayer.h", "_n_e_mean_std_dev_normalization_layer_8h.xhtml", [
+      [ "NEMeanStdDevNormalizationLayer", "classarm__compute_1_1_n_e_mean_std_dev_normalization_layer.xhtml", "classarm__compute_1_1_n_e_mean_std_dev_normalization_layer" ]
     ] ],
     [ "NEMedian3x3.h", "_n_e_median3x3_8h.xhtml", [
       [ "NEMedian3x3", "classarm__compute_1_1_n_e_median3x3.xhtml", "classarm__compute_1_1_n_e_median3x3" ]
@@ -240,10 +271,14 @@ var dir_345bd7154d1542d1e03fd2836959a19d =
       [ "NEPhase", "classarm__compute_1_1_n_e_phase.xhtml", "classarm__compute_1_1_n_e_phase" ]
     ] ],
     [ "NEPixelWiseMultiplication.h", "_n_e_pixel_wise_multiplication_8h.xhtml", [
-      [ "NEPixelWiseMultiplication", "classarm__compute_1_1_n_e_pixel_wise_multiplication.xhtml", "classarm__compute_1_1_n_e_pixel_wise_multiplication" ]
+      [ "NEPixelWiseMultiplication", "classarm__compute_1_1_n_e_pixel_wise_multiplication.xhtml", "classarm__compute_1_1_n_e_pixel_wise_multiplication" ],
+      [ "NEComplexPixelWiseMultiplication", "classarm__compute_1_1_n_e_complex_pixel_wise_multiplication.xhtml", "classarm__compute_1_1_n_e_complex_pixel_wise_multiplication" ]
     ] ],
     [ "NEPoolingLayer.h", "_n_e_pooling_layer_8h.xhtml", [
       [ "NEPoolingLayer", "classarm__compute_1_1_n_e_pooling_layer.xhtml", "classarm__compute_1_1_n_e_pooling_layer" ]
+    ] ],
+    [ "NEPReluLayer.h", "_n_e_p_relu_layer_8h.xhtml", [
+      [ "NEPReluLayer", "classarm__compute_1_1_n_e_p_relu_layer.xhtml", "classarm__compute_1_1_n_e_p_relu_layer" ]
     ] ],
     [ "NEPriorBoxLayer.h", "_n_e_prior_box_layer_8h.xhtml", [
       [ "NEPriorBoxLayer", "classarm__compute_1_1_n_e_prior_box_layer.xhtml", "classarm__compute_1_1_n_e_prior_box_layer" ]
@@ -305,6 +340,12 @@ var dir_345bd7154d1542d1e03fd2836959a19d =
     [ "NESoftmaxLayer.h", "_n_e_softmax_layer_8h.xhtml", [
       [ "NESoftmaxLayer", "classarm__compute_1_1_n_e_softmax_layer.xhtml", "classarm__compute_1_1_n_e_softmax_layer" ]
     ] ],
+    [ "NESpaceToBatchLayer.h", "_n_e_space_to_batch_layer_8h.xhtml", [
+      [ "NESpaceToBatchLayer", "classarm__compute_1_1_n_e_space_to_batch_layer.xhtml", "classarm__compute_1_1_n_e_space_to_batch_layer" ]
+    ] ],
+    [ "NESpaceToDepthLayer.h", "_n_e_space_to_depth_layer_8h.xhtml", [
+      [ "NESpaceToDepthLayer", "classarm__compute_1_1_n_e_space_to_depth_layer.xhtml", "classarm__compute_1_1_n_e_space_to_depth_layer" ]
+    ] ],
     [ "NESplit.h", "_n_e_split_8h.xhtml", [
       [ "NESplit", "classarm__compute_1_1_n_e_split.xhtml", "classarm__compute_1_1_n_e_split" ]
     ] ],
@@ -337,9 +378,6 @@ var dir_345bd7154d1542d1e03fd2836959a19d =
     ] ],
     [ "NEWarpPerspective.h", "_n_e_warp_perspective_8h.xhtml", [
       [ "NEWarpPerspective", "classarm__compute_1_1_n_e_warp_perspective.xhtml", "classarm__compute_1_1_n_e_warp_perspective" ]
-    ] ],
-    [ "NEWidthConcatenateLayer.h", "_n_e_width_concatenate_layer_8h.xhtml", [
-      [ "NEWidthConcatenateLayer", "classarm__compute_1_1_n_e_width_concatenate_layer.xhtml", "classarm__compute_1_1_n_e_width_concatenate_layer" ]
     ] ],
     [ "NEWinogradConvolutionLayer.h", "_n_e_winograd_convolution_layer_8h.xhtml", [
       [ "NEWinogradConvolutionLayer", "classarm__compute_1_1_n_e_winograd_convolution_layer.xhtml", "classarm__compute_1_1_n_e_winograd_convolution_layer" ]

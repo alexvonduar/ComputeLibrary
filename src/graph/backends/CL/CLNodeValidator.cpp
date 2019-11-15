@@ -62,6 +62,8 @@ Status CLNodeValidator::validate(INode *node)
                    CLDepthwiseConvolutionLayer3x3>(*polymorphic_downcast<DepthwiseConvolutionLayerNode *>(node));
         case NodeType::DetectionOutputLayer:
             return detail::validate_detection_output_layer<CPPDetectionOutputLayer>(*polymorphic_downcast<DetectionOutputLayerNode *>(node));
+        case NodeType::DetectionPostProcessLayer:
+            return detail::validate_detection_post_process_layer<CPPDetectionPostProcessLayer>(*polymorphic_downcast<DetectionPostProcessLayerNode *>(node));
         case NodeType::GenerateProposalsLayer:
             return detail::validate_generate_proposals_layer<CLGenerateProposalsLayer>(*polymorphic_downcast<GenerateProposalsLayerNode *>(node));
         case NodeType::NormalizePlanarYUVLayer:
@@ -72,8 +74,12 @@ Status CLNodeValidator::validate(INode *node)
             return detail::validate_permute_layer<CLPermute>(*polymorphic_downcast<PermuteLayerNode *>(node));
         case NodeType::PriorBoxLayer:
             return detail::validate_priorbox_layer<CLPriorBoxLayer>(*polymorphic_downcast<PriorBoxLayerNode *>(node));
+        case NodeType::QuantizationLayer:
+            return detail::validate_quantization_layer<CLQuantizationLayer>(*polymorphic_downcast<QuantizationLayerNode *>(node));
         case NodeType::ReorgLayer:
             return detail::validate_reorg_layer<CLReorgLayer>(*polymorphic_downcast<ReorgLayerNode *>(node));
+        case NodeType::ReshapeLayer:
+            return detail::validate_reshape_layer<CLReshapeLayer>(*polymorphic_downcast<ReshapeLayerNode *>(node));
         case NodeType::ROIAlignLayer:
             return detail::validate_roi_align_layer<CLROIAlignLayer>(*polymorphic_downcast<ROIAlignLayerNode *>(node));
         case NodeType::SliceLayer:

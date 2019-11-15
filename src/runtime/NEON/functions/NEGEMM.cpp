@@ -58,17 +58,19 @@ void NEGEMM::configure(const ITensor *a, const ITensor *b, const ITensor *c, ITe
     _run_vector_matrix_multiplication = a->info()->dimension(1) < 2;
     _original_b                       = b;
 
-    bool run_optimised = c == nullptr && bool(NEGEMMAssemblyDispatch::validate(a->info(), b->info(), d->info(), alpha, beta, _reshape_b_only_on_first_run));
+    bool run_optimised = c == nullptr && bool(NEGEMMAssemblyDispatch::validate(a->info(), b->info(), c != nullptr ? c->info() : nullptr, d->info(), alpha, beta, gemm_info));
 
     if(run_optimised)
     {
         if(MEMInfo::get_policy() == MemoryPolicy::MINIMIZE)
         {
-            _asm_glue.configure(a, b, d, alpha, beta, false);
+            GEMMInfo gemm_info_ntb = gemm_info;
+            gemm_info_ntb.set_pretranpose_B(false);
+            _asm_glue.configure(a, b, c, d, alpha, beta, gemm_info_ntb);
         }
         else
         {
-            _asm_glue.configure(a, b, d, alpha, beta, _reshape_b_only_on_first_run);
+            _asm_glue.configure(a, b, c, d, alpha, beta, gemm_info);
         }
         ARM_COMPUTE_ERROR_ON(!_asm_glue.is_configured());
     }
@@ -176,7 +178,7 @@ Status NEGEMM::validate(const ITensorInfo *a, const ITensorInfo *b, const ITenso
     }
 
     // Check if we need to run the optimized assembly kernel
-    const bool run_optimised = c == nullptr && bool(NEGEMMAssemblyDispatch::validate(a, b, output, alpha, beta, true));
+    const bool run_optimised = c == nullptr && bool(NEGEMMAssemblyDispatch::validate(a, b, c, output, alpha, beta, gemm_info));
 
     if(!run_optimised)
     {
@@ -238,16 +240,14 @@ void NEGEMM::run()
 {
     prepare();
 
+    MemoryGroupResourceScope scope_mg(_memory_group);
+
     if(_asm_glue.is_configured())
     {
-        _memory_group.acquire();
         _asm_glue.run();
-        _memory_group.release();
     }
     else
     {
-        _memory_group.acquire();
-
         if(!_run_vector_matrix_multiplication)
         {
             // Run interleave kernel
@@ -261,8 +261,6 @@ void NEGEMM::run()
         }
 
         NEScheduler::get().schedule(&_mm_kernel, _run_vector_matrix_multiplication ? Window::DimX : Window::DimY);
-
-        _memory_group.release();
 
         // Run matrix addition kernel
         if(_run_addition)

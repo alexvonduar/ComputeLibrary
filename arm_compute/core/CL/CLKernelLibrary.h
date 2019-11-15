@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 ARM Limited.
+ * Copyright (c) 2016-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -297,6 +297,11 @@ public:
      * @return The content of CL_DEVICE_VERSION
      */
     std::string get_device_version();
+    /** Return the maximum number of compute units in the device
+     *
+     * @return The content of CL_DEVICE_MAX_COMPUTE_UNITS
+     */
+    cl_uint get_num_compute_units();
     /** Creates a kernel from the kernel library.
      *
      * @param[in] kernel_name       Kernel name.
@@ -333,7 +338,7 @@ public:
      * @param[in] built_program_name Name of the program
      * @param[in] program            Built program to add to the cache
      */
-    void add_built_program(const std::string &built_program_name, cl::Program program);
+    void add_built_program(const std::string &built_program_name, const cl::Program &program);
 
     /** Returns true if FP16 is supported by the CL device
      *

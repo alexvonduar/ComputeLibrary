@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,14 +42,18 @@ using namespace arm_compute;
 
 namespace
 {
-Status validate_arguments(const ITensorInfo *input, const ITensorInfo *bias, const ITensorInfo *output)
+Status validate_arguments(const ITensorInfo *input, const ITensorInfo *bias, const ITensorInfo *output,
+                          int result_fixedpoint_multiplier, int result_shift, int result_offset_after_shift)
 {
+    ARM_COMPUTE_UNUSED(result_fixedpoint_multiplier);
+    ARM_COMPUTE_UNUSED(result_offset_after_shift);
     ARM_COMPUTE_RETURN_ERROR_ON_CPU_F16_UNSUPPORTED(input);
     ARM_COMPUTE_RETURN_ERROR_ON(input->data_layout() == DataLayout::UNKNOWN);
     ARM_COMPUTE_RETURN_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(input, 1, DataType::QASYMM8,
                                                          DataType::F16,
                                                          DataType::S32, DataType::F32);
 
+    ARM_COMPUTE_RETURN_ERROR_ON_MSG(result_shift < 0, "Result shift must be a non negative integer");
     if(bias != nullptr)
     {
         ARM_COMPUTE_RETURN_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(bias, 1, DataType::F16, DataType::S32, DataType::F32);
@@ -266,7 +270,7 @@ void output_stage_nhwc(ITensor *input, const ITensor *bias, const Window &window
 
     if(in_place) // In place accumulate
     {
-        execute_window_loop(window, [&](const Coordinates & id)
+        execute_window_loop(window, [&](const Coordinates &)
         {
             // Get bias and pointer to input
             const auto in_ptr   = reinterpret_cast<T1 *>(in.ptr());
@@ -287,7 +291,7 @@ void output_stage_nhwc(ITensor *input, const ITensor *bias, const Window &window
     else // Out of place accumulate
     {
         Iterator out(output, window);
-        execute_window_loop(window, [&](const Coordinates & id)
+        execute_window_loop(window, [&](const Coordinates &)
         {
             // Get bias and pointer to input
             const auto in_ptr   = reinterpret_cast<T1 *>(in.ptr());
@@ -363,7 +367,7 @@ void output_stage_nchw<int32_t, uint8_t, false, false>(ITensor *input, const ITe
 
     Iterator in(input, window);
     Iterator out(output, window);
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         // Get bias and pointer to input
         const auto  in_ptr = reinterpret_cast<int32_t *>(in.ptr());
@@ -399,7 +403,7 @@ void output_stage_nhwc<int32_t, uint8_t, false, true>(ITensor *input, const ITen
     Iterator bi(bias, window_bias);
 
     Iterator out(output, window);
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         // Get bias and pointer to input
         const auto in_ptr   = reinterpret_cast<int32_t *>(in.ptr());
@@ -433,7 +437,7 @@ void output_stage_nhwc<int32_t, uint8_t, false, false>(ITensor *input, const ITe
 
     Iterator in(input, window);
     Iterator out(output, window);
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         // Get pointer to input
         const auto in_ptr = reinterpret_cast<int32_t *>(in.ptr());
@@ -475,7 +479,8 @@ void NEDirectConvolutionLayerOutputStageKernel::configure(ITensor *input, const 
     }
 
     // Perform validation step
-    ARM_COMPUTE_ERROR_THROW_ON(validate_arguments(input->info(), (bias == nullptr) ? nullptr : bias->info(), (output == nullptr) ? nullptr : output->info()));
+    ARM_COMPUTE_ERROR_THROW_ON(validate_arguments(input->info(), (bias == nullptr) ? nullptr : bias->info(), (output == nullptr) ? nullptr : output->info(),
+                                                  result_fixedpoint_multiplier, result_shift, result_offset_after_shift));
 
     _func                         = nullptr;
     _bias                         = bias;
@@ -577,9 +582,10 @@ void NEDirectConvolutionLayerOutputStageKernel::configure(ITensor *input, const 
     }
 }
 
-Status NEDirectConvolutionLayerOutputStageKernel::validate(const ITensorInfo *input, const ITensorInfo *bias, const ITensorInfo *output)
+Status NEDirectConvolutionLayerOutputStageKernel::validate(const ITensorInfo *input, const ITensorInfo *bias, const ITensorInfo *output,
+                                                           int result_fixedpoint_multiplier, int result_shift, int result_offset_after_shift)
 {
-    ARM_COMPUTE_RETURN_ON_ERROR(validate_arguments(input, bias, output));
+    ARM_COMPUTE_RETURN_ON_ERROR(validate_arguments(input, bias, output, result_fixedpoint_multiplier, result_shift, result_offset_after_shift));
     ARM_COMPUTE_RETURN_ON_ERROR(validate_and_configure_window(input->clone().get(), bias == nullptr ? nullptr : bias->clone().get(), output == nullptr ? nullptr : output->clone().get()).first);
 
     return Status{};

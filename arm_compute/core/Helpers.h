@@ -158,24 +158,24 @@ inline T delta_bilinear_c1(const T *pixel_ptr, size_t stride, float dx, float dy
  *
  * @return The bilinear interpolated pixel value
  */
-inline uint8_t delta_bilinear_c1_quantized(const uint8_t *pixel_ptr, size_t stride, float dx, float dy, QuantizationInfo iq_info, QuantizationInfo oq_info)
+inline uint8_t delta_bilinear_c1_quantized(const uint8_t *pixel_ptr, size_t stride, float dx, float dy, UniformQuantizationInfo iq_info, UniformQuantizationInfo oq_info)
 {
     ARM_COMPUTE_ERROR_ON(pixel_ptr == nullptr);
 
     const float dx1 = 1.0f - dx;
     const float dy1 = 1.0f - dy;
 
-    const float a00 = iq_info.dequantize(*pixel_ptr);
-    const float a01 = iq_info.dequantize(*(pixel_ptr + 1));
-    const float a10 = iq_info.dequantize(*(pixel_ptr + stride));
-    const float a11 = iq_info.dequantize(*(pixel_ptr + stride + 1));
+    const float a00 = dequantize_qasymm8(*pixel_ptr, iq_info);
+    const float a01 = dequantize_qasymm8(*(pixel_ptr + 1), iq_info);
+    const float a10 = dequantize_qasymm8(*(pixel_ptr + stride), iq_info);
+    const float a11 = dequantize_qasymm8(*(pixel_ptr + stride + 1), iq_info);
 
     const float w1  = dx1 * dy1;
     const float w2  = dx * dy1;
     const float w3  = dx1 * dy;
     const float w4  = dx * dy;
     float       res = a00 * w1 + a01 * w2 + a10 * w3 + a11 * w4;
-    return static_cast<uint8_t>(oq_info.quantize(res, RoundingPolicy::TO_NEAREST_UP));
+    return static_cast<uint8_t>(quantize_qasymm8(res, oq_info));
 }
 
 /** Computes linear interpolation using the pointer to the top pixel and the pixel's distance between
@@ -707,6 +707,15 @@ inline int coords2index(const TensorShape &shape, const Coordinates &coord);
  */
 inline size_t get_data_layout_dimension_index(const DataLayout data_layout, const DataLayoutDimension data_layout_dimension);
 
+/** Get the DataLayoutDimension of a given index and layout.
+ *
+ * @param[in] data_layout The data layout.
+ * @param[in] index       The data layout index.
+ *
+ * @return The dimension which this index is requested for.
+ */
+inline DataLayoutDimension get_index_data_layout_dimension(const DataLayout data_layout, const size_t index);
+
 /** Calculate the normalization dimension index for a given normalization type
  *
  * @param[in] layout Data layout of the input and output tensor
@@ -755,6 +764,34 @@ template <typename T>
 inline T wrap_around(T x, T m)
 {
     return x >= 0 ? x % m : (x % m + m) % m;
+}
+
+/** Given an integer value, this function returns the next power of two
+ *
+ * @param[in] x Input value
+ *
+ * @return the next power of two
+ */
+inline unsigned int get_next_power_two(unsigned int x)
+{
+    // Decrement by 1
+    x--;
+
+    // Shift right by 1
+    x |= x >> 1u;
+    // Shift right by 2
+    x |= x >> 2u;
+    // Shift right by 4
+    x |= x >> 4u;
+    // Shift right by 8
+    x |= x >> 8u;
+    // Shift right by 16
+    x |= x >> 16u;
+
+    // Increment by 1
+    x++;
+
+    return x;
 }
 } // namespace arm_compute
 

@@ -40,7 +40,7 @@
   <img alt="Compute Library" src="https://raw.githubusercontent.com/ARM-software/ComputeLibrary/gh-pages/ACL_logo.png" style="max-width: 100%;margin-top: 15px;margin-left: 10px"/>
   <td style="padding-left: 0.5em;">
    <div id="projectname">
-   &#160;<span id="projectnumber">19.02</span>
+   &#160;<span id="projectnumber">19.08</span>
    </div>
   </td>
  </tr>
@@ -170,7 +170,7 @@ class arm_gemm::GemvBatched&lt; To, Tr &gt;</h3>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="gemv__batched_8hpp_source.xhtml#l00039">39</a> of file <a class="el" href="gemv__batched_8hpp_source.xhtml">gemv_batched.hpp</a>.</p>
-<div class="fragment"><div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;                                          {</div><div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;        <span class="comment">/* Just create a subgemm with batches-&gt;M */</span></div><div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;        GemmArgs&lt;Tr&gt; newargs = args;</div><div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        newargs._Msize = args._nbatches;</div><div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;        newargs._nbatches = 1;</div><div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        _subgemm = gemm&lt;To,Tr&gt;(newargs);</div><div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    }</div></div><!-- fragment -->
+<div class="fragment"><div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;                                          {</div><div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;        <span class="comment">/* Just create a subgemm with batches-&gt;M */</span></div><div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;        GemmArgs&lt;Tr&gt; newargs = args;</div><div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        newargs._Msize = args._nbatches;</div><div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;        newargs._nbatches = 1;</div><div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        newargs._cfg = <span class="keyword">nullptr</span>;</div><div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        _subgemm = gemm&lt;To,Tr&gt;(newargs);</div><div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    }</div></div><!-- fragment -->
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
@@ -399,8 +399,8 @@ class arm_gemm::GemvBatched&lt; To, Tr &gt;</h3>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="gemv__batched_8hpp_source.xhtml#l00090">90</a> of file <a class="el" href="gemv__batched_8hpp_source.xhtml">gemv_batched.hpp</a>.</p>
-<div class="fragment"><div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;                                                                                                           {</div><div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;        _subgemm-&gt;pretranspose_B_array(buffer, B, ldb, B_multi_stride);</div><div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;    }</div></div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="gemv__batched_8hpp_source.xhtml#l00089">89</a> of file <a class="el" href="gemv__batched_8hpp_source.xhtml">gemv_batched.hpp</a>.</p>
+<div class="fragment"><div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;                                                                                                           {</div><div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;        _subgemm-&gt;pretranspose_B_array(buffer, B, ldb, B_multi_stride);</div><div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;    }</div></div><!-- fragment -->
 </div>
 </div>
 <a id="a2f51067424ad17181061558494fed662"></a>
@@ -547,8 +547,8 @@ class arm_gemm::GemvBatched&lt; To, Tr &gt;</h3>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="gemv__batched_8hpp_source.xhtml#l00094">94</a> of file <a class="el" href="gemv__batched_8hpp_source.xhtml">gemv_batched.hpp</a>.</p>
-<div class="fragment"><div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;                                                         {</div><div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;        _subgemm-&gt;set_pretransposed_B_data(buffer);</div><div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;    }</div></div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="gemv__batched_8hpp_source.xhtml#l00093">93</a> of file <a class="el" href="gemv__batched_8hpp_source.xhtml">gemv_batched.hpp</a>.</p>
+<div class="fragment"><div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;                                                         {</div><div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;        _subgemm-&gt;set_pretransposed_B_data(buffer);</div><div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    }</div></div><!-- fragment -->
 </div>
 </div>
 <a id="a458c339803f238b70020c3d933e9f766"></a>
@@ -588,7 +588,7 @@ class arm_gemm::GemvBatched&lt; To, Tr &gt;</h3>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacearm__gemm.xhtml">arm_gemm</a></li><li class="navelem"><a class="el" href="classarm__gemm_1_1_gemv_batched.xhtml">GemvBatched</a></li>
-    <li class="footer">Generated on Thu Feb 28 2019 12:25:07 for Compute Library by
+    <li class="footer">Generated on Mon Sep 2 2019 11:47:42 for Compute Library by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.15 </li>
   </ul>

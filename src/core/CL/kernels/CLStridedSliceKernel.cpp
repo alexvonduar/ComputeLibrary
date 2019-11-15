@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 ARM Limited.
+ * Copyright (c) 2018-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ Status validate_arguments(const ITensorInfo *input, const ITensorInfo *output,
     ARM_COMPUTE_RETURN_ERROR_ON_F16_UNSUPPORTED(input);
     ARM_COMPUTE_RETURN_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(input, 1,
                                                          DataType::U8, DataType::S8, DataType::QASYMM8,
-                                                         DataType::U16, DataType::S16,
+                                                         DataType::U16, DataType::S16, DataType::QSYMM16,
                                                          DataType::U32, DataType::S32,
                                                          DataType::F16, DataType::F32);
 
@@ -89,9 +89,7 @@ std::pair<Status, Window> validate_and_configure_window(ITensorInfo *input, ITen
     auto_init_if_empty(*output, input->clone()->set_tensor_shape(output_shape));
 
     // Create window
-    const unsigned int num_elems_processed_per_iteration = 1;
-
-    Window win = calculate_max_window(*output, Steps(num_elems_processed_per_iteration));
+    Window win = calculate_max_window(*output, Steps());
     output->set_valid_region(ValidRegion(Coordinates(), output->tensor_shape()));
 
     return std::make_pair(Status{}, win);
@@ -115,7 +113,9 @@ void CLStridedSliceKernel::configure(const ICLTensor *input, ICLTensor *output,
 
     const TensorShape &input_shape = input->info()->tensor_shape();
 
-    Coordinates starts_abs, ends_abs, final_strides;
+    Coordinates starts_abs;
+    Coordinates ends_abs;
+    Coordinates final_strides;
     std::tie(starts_abs, ends_abs, final_strides) = arm_compute::helpers::tensor_transform::calculate_strided_slice_coords(
                                                         input_shape,
                                                         starts, ends, strides,

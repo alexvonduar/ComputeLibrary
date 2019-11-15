@@ -168,10 +168,13 @@ inline std::string get_typestring(DataType data_type)
         case DataType::QASYMM8:
             return no_endianness + "u" + support::cpp11::to_string(sizeof(uint8_t));
         case DataType::S8:
+        case DataType::QSYMM8:
+        case DataType::QSYMM8_PER_CHANNEL:
             return no_endianness + "i" + support::cpp11::to_string(sizeof(int8_t));
         case DataType::U16:
             return endianness + "u" + support::cpp11::to_string(sizeof(uint16_t));
         case DataType::S16:
+        case DataType::QSYMM16:
             return endianness + "i" + support::cpp11::to_string(sizeof(int16_t));
         case DataType::U32:
             return endianness + "u" + support::cpp11::to_string(sizeof(uint32_t));
@@ -613,10 +616,10 @@ void save_to_ppm(T &tensor, const std::string &ppm_filename)
  * @param[in] npy_filename  Filename of the file to create.
  * @param[in] fortran_order If true, save matrix in fortran order.
  */
-template <typename T>
+template <typename T, typename U = float>
 void save_to_npy(T &tensor, const std::string &npy_filename, bool fortran_order)
 {
-    ARM_COMPUTE_ERROR_ON_DATA_TYPE_NOT_IN(&tensor, arm_compute::DataType::F32);
+    ARM_COMPUTE_ERROR_ON_DATA_TYPE_NOT_IN(&tensor, arm_compute::DataType::F32, arm_compute::DataType::QASYMM8);
 
     std::ofstream fs;
     try
@@ -634,33 +637,25 @@ void save_to_npy(T &tensor, const std::string &npy_filename, bool fortran_order)
         // Map buffer if creating a CLTensor
         map(tensor, true);
 
-        switch(tensor.info()->data_type())
+        using typestring_type = typename std::conditional<std::is_floating_point<U>::value, float, qasymm8_t>::type;
+
+        std::vector<typestring_type> tmp; /* Used only to get the typestring */
+        npy::Typestring              typestring_o{ tmp };
+        std::string                  typestring = typestring_o.str();
+
+        std::ofstream stream(npy_filename, std::ofstream::binary);
+        npy::write_header(stream, typestring, fortran_order, shape);
+
+        arm_compute::Window window;
+        window.use_tensor_dimensions(tensor.info()->tensor_shape());
+
+        arm_compute::Iterator in(&tensor, window);
+
+        arm_compute::execute_window_loop(window, [&](const arm_compute::Coordinates & id)
         {
-            case arm_compute::DataType::F32:
-            {
-                std::vector<float> tmp; /* Used only to get the typestring */
-                npy::Typestring    typestring_o{ tmp };
-                std::string        typestring = typestring_o.str();
-
-                std::ofstream stream(npy_filename, std::ofstream::binary);
-                npy::write_header(stream, typestring, fortran_order, shape);
-
-                arm_compute::Window window;
-                window.use_tensor_dimensions(tensor.info()->tensor_shape());
-
-                arm_compute::Iterator in(&tensor, window);
-
-                arm_compute::execute_window_loop(window, [&](const arm_compute::Coordinates & id)
-                {
-                    stream.write(reinterpret_cast<const char *>(in.ptr()), sizeof(float));
-                },
-                in);
-
-                break;
-            }
-            default:
-                ARM_COMPUTE_ERROR("Unsupported format");
-        }
+            stream.write(reinterpret_cast<const char *>(in.ptr()), sizeof(typestring_type));
+        },
+        in);
 
         // Unmap buffer if creating a CLTensor
         unmap(tensor);
@@ -774,7 +769,7 @@ void fill_random_tensor(T &tensor, float lower_bound, float upper_bound)
 template <typename T>
 void init_sgemm_output(T &dst, T &src0, T &src1, arm_compute::DataType dt)
 {
-    dst.allocator()->init(TensorInfo(TensorShape(src1.info()->dimension(0), src0.info()->dimension(1)), 1, dt));
+    dst.allocator()->init(TensorInfo(TensorShape(src1.info()->dimension(0), src0.info()->dimension(1), src0.info()->dimension(2)), 1, dt));
 }
 /** This function returns the amount of memory free reading from /proc/meminfo
  *
@@ -782,15 +777,16 @@ void init_sgemm_output(T &dst, T &src0, T &src1, arm_compute::DataType dt)
  */
 uint64_t get_mem_free_from_meminfo();
 
-/** Compare to tensor
+/** Compare two tensors
  *
- * @param[in] tensor1 First tensor to be compared.
- * @param[in] tensor2 Second tensor to be compared.
+ * @param[in] tensor1   First tensor to be compared.
+ * @param[in] tensor2   Second tensor to be compared.
+ * @param[in] tolerance Tolerance used for the comparison.
  *
  * @return The number of mismatches
  */
 template <typename T>
-int compare_tensor(ITensor &tensor1, ITensor &tensor2)
+int compare_tensor(ITensor &tensor1, ITensor &tensor2, T tolerance)
 {
     ARM_COMPUTE_ERROR_ON_MISMATCHING_DATA_TYPES(&tensor1, &tensor2);
     ARM_COMPUTE_ERROR_ON_MISMATCHING_SHAPES(&tensor1, &tensor2);
@@ -807,7 +803,7 @@ int compare_tensor(ITensor &tensor1, ITensor &tensor2)
 
     execute_window_loop(window, [&](const Coordinates & id)
     {
-        if(std::abs(*reinterpret_cast<T *>(itensor1.ptr()) - *reinterpret_cast<T *>(itensor2.ptr())) > 0.0001)
+        if(std::abs(*reinterpret_cast<T *>(itensor1.ptr()) - *reinterpret_cast<T *>(itensor2.ptr())) > tolerance)
         {
             ++num_mismatches;
         }
@@ -819,6 +815,18 @@ int compare_tensor(ITensor &tensor1, ITensor &tensor2)
 
     return num_mismatches;
 }
+
+/** This function saves opencl kernels library to a file
+ *
+ * @param[in] filename Name of the file to be used to save the library
+ */
+void save_program_cache_to_file(const std::string &filename = "cache.bin");
+
+/** This function loads prebuilt opencl kernels from a file
+ *
+ * @param[in] filename Name of the file to be used to load the kernels
+ */
+void restore_program_cache_from_file(const std::string &filename = "cache.bin");
 } // namespace utils
 } // namespace arm_compute
 #endif /* __UTILS_UTILS_H__*/

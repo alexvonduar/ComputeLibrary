@@ -67,6 +67,7 @@ namespace arm_compute
         - @ref NEAccumulateSquared
         - @ref NEAccumulateWeighted
         - @ref NEActivationLayer
+        - @ref NEBatchToSpaceLayer
         - @ref NEBitwiseAnd
         - @ref NEBitwiseNot
         - @ref NEBitwiseOr
@@ -103,13 +104,15 @@ namespace arm_compute
     - @ref NEArgMinMaxLayer
     - @ref NEBatchNormalizationLayer
     - @ref NECannyEdge
+    - @ref NEComplexPixelWiseMultiplication
     - @ref NEConcatenateLayer
     - @ref NEConvertFullyConnectedWeights
     - @ref NEConvolutionLayer
     - @ref NEConvolutionLayerReshapeWeights
     - @ref NEConvolutionSquare &lt;matrix_size&gt;
+    - @ref NECropResize
     - @ref NEDeconvolutionLayer
-    - @ref NEDepthConcatenateLayer
+    - @ref NEDepthwiseConvolutionAssemblyDispatch
     - @ref NEDepthwiseConvolutionLayer
     - @ref NEDepthwiseConvolutionLayer3x3
     - @ref NEDepthwiseSeparableConvolutionLayer
@@ -118,6 +121,9 @@ namespace arm_compute
     - @ref NEDirectConvolutionLayer
     - @ref NEEqualizeHistogram
     - @ref NEFastCorners
+    - @ref NEFFT1D
+    - @ref NEFFT2D
+    - @ref NEFFTConvolutionLayer
     - @ref NEFillBorder
     - @ref NEFullyConnectedLayer
     - @ref NEFuseBatchNormalization
@@ -159,11 +165,11 @@ namespace arm_compute
     - @ref NESobel5x5
     - @ref NESobel7x7
     - @ref NESoftmaxLayer
+    - @ref NESpaceToBatchLayer
     - @ref NESplit
     - @ref NEStackLayer
     - @ref NEUnstack
     - @ref NEUpsampleLayer
-    - @ref NEWidthConcatenateLayer
     - @ref NEWinogradConvolutionLayer
 
 @section S5_2 OpenCL functions
@@ -172,20 +178,25 @@ namespace arm_compute
     - @ref CLBatchNormalizationLayer
     - @ref CLBatchToSpaceLayer
     - @ref CLCannyEdge
+    - @ref CLComplexPixelWiseMultiplication
     - @ref CLConcatenateLayer
     - @ref CLConvolutionLayer
     - @ref CLConvolutionLayerReshapeWeights
     - @ref CLConvolutionSquare &lt;matrix_size&gt;
+    - @ref CLCropResize
     - @ref CLDeconvolutionLayer
     - @ref CLDeconvolutionLayerUpsample
-    - @ref CLDepthConcatenateLayer
     - @ref CLDepthwiseConvolutionLayer
     - @ref CLDepthwiseConvolutionLayer3x3
     - @ref CLDepthwiseSeparableConvolutionLayer
     - @ref CLDequantizationLayer
     - @ref CLDirectConvolutionLayer
+    - @ref CLDirectDeconvolutionLayer
     - @ref CLEqualizeHistogram
     - @ref CLFastCorners
+    - @ref CLFFT1D
+    - @ref CLFFT2D
+    - @ref CLFFTConvolutionLayer
     - @ref CLFullyConnectedLayer
     - @ref CLFuseBatchNormalization
     - @ref CLGaussian5x5
@@ -194,6 +205,7 @@ namespace arm_compute
         - @ref CLGaussianPyramidOrb
     - @ref CLGEMM
     - @ref CLGEMMConvolutionLayer
+    - @ref CLGEMMDeconvolutionLayer
     - @ref CLGEMMLowpMatrixMultiplyCore
     - @ref CLGenerateProposalsLayer
     - @ref CLHarrisCorners
@@ -226,7 +238,6 @@ namespace arm_compute
     - @ref CLStackLayer
     - @ref CLUnstack
     - @ref CLUpsampleLayer
-    - @ref CLWidthConcatenateLayer
     - @ref CLWinogradConvolutionLayer
     - @ref ICLSimpleFunction
         - @ref CLAbsoluteDifference
@@ -270,11 +281,9 @@ namespace arm_compute
         - @ref CLFullyConnectedLayerReshapeWeights
         - @ref CLGather
         - @ref CLGaussian3x3
-        - @ref CLGEMMInterleave4x4
         - @ref CLGEMMLowpQuantizeDownInt32ToUint8Scale
         - @ref CLGEMMLowpQuantizeDownInt32ToUint8ScaleByFixedPoint
         - @ref CLGEMMLowpQuantizeDownInt32ToUint8ScaleByFloat
-        - @ref CLGEMMTranspose1xW
         - @ref CLMagnitude
         - @ref CLMedian3x3
         - @ref CLNonLinearFilter
@@ -311,9 +320,9 @@ namespace arm_compute
 
 - @ref IFunction
     - @ref GCBatchNormalizationLayer
+    - @ref GCConcatenateLayer
     - @ref GCConvolutionLayer
     - @ref GCConvolutionLayerReshapeWeights
-    - @ref GCDepthConcatenateLayer
     - @ref GCDepthwiseConvolutionLayer3x3
     - @ref GCDirectConvolutionLayer
     - @ref GCDropoutLayer

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,45 +74,6 @@ void fill_mask_from_pattern(uint8_t *mask, int cols, int rows, MatrixPattern pat
     }
 }
 
-TensorShape calculate_depth_concatenate_shape(const std::vector<TensorShape> &input_shapes)
-{
-    ARM_COMPUTE_ERROR_ON(input_shapes.empty());
-
-    TensorShape out_shape = input_shapes[0];
-
-    size_t max_x = 0;
-    size_t max_y = 0;
-    size_t depth = 0;
-
-    for(const auto &shape : input_shapes)
-    {
-        max_x = std::max(shape.x(), max_x);
-        max_y = std::max(shape.y(), max_y);
-        depth += shape.z();
-    }
-
-    out_shape.set(0, max_x);
-    out_shape.set(1, max_y);
-    out_shape.set(2, depth);
-
-    return out_shape;
-}
-
-TensorShape calculate_width_concatenate_shape(const std::vector<TensorShape> &input_shapes)
-{
-    ARM_COMPUTE_ERROR_ON(input_shapes.empty());
-
-    TensorShape out_shape = input_shapes[0];
-
-    int width = std::accumulate(input_shapes.begin(), input_shapes.end(), 0, [](int sum, const TensorShape & shape)
-    {
-        return sum + shape.x();
-    });
-    out_shape.set(0, width);
-
-    return out_shape;
-}
-
 HarrisCornersParameters harris_corners_parameters()
 {
     HarrisCornersParameters params;
@@ -149,22 +110,50 @@ CannyEdgeParameters canny_edge_parameters()
 
 SimpleTensor<float> convert_from_asymmetric(const SimpleTensor<uint8_t> &src)
 {
-    const QuantizationInfo &quantization_info = src.quantization_info();
-    SimpleTensor<float>     dst{ src.shape(), DataType::F32, 1, QuantizationInfo(), src.data_layout() };
+    const UniformQuantizationInfo &quantization_info = src.quantization_info().uniform();
+    SimpleTensor<float>            dst{ src.shape(), DataType::F32, 1, QuantizationInfo(), src.data_layout() };
 
     for(int i = 0; i < src.num_elements(); ++i)
     {
-        dst[i] = quantization_info.dequantize(src[i]);
+        dst[i] = dequantize_qasymm8(src[i], quantization_info);
     }
     return dst;
 }
 
 SimpleTensor<uint8_t> convert_to_asymmetric(const SimpleTensor<float> &src, const QuantizationInfo &quantization_info)
 {
-    SimpleTensor<uint8_t> dst{ src.shape(), DataType::QASYMM8, 1, quantization_info };
+    SimpleTensor<uint8_t>          dst{ src.shape(), DataType::QASYMM8, 1, quantization_info };
+    const UniformQuantizationInfo &qinfo = quantization_info.uniform();
+
     for(int i = 0; i < src.num_elements(); ++i)
     {
-        dst[i] = quantization_info.quantize(src[i], RoundingPolicy::TO_NEAREST_UP);
+        dst[i] = quantize_qasymm8(src[i], qinfo);
+    }
+    return dst;
+}
+
+template <>
+SimpleTensor<int16_t> convert_to_symmetric(const SimpleTensor<float> &src, const QuantizationInfo &quantization_info)
+{
+    SimpleTensor<int16_t>          dst{ src.shape(), DataType::QSYMM16, 1, quantization_info };
+    const UniformQuantizationInfo &qinfo = quantization_info.uniform();
+
+    for(int i = 0; i < src.num_elements(); ++i)
+    {
+        dst[i] = quantize_qsymm16(src[i], qinfo);
+    }
+    return dst;
+}
+
+template <>
+SimpleTensor<float> convert_from_symmetric(const SimpleTensor<int16_t> &src)
+{
+    const UniformQuantizationInfo &quantization_info = src.quantization_info().uniform();
+    SimpleTensor<float>            dst{ src.shape(), DataType::F32, 1, QuantizationInfo(), src.data_layout() };
+
+    for(int i = 0; i < src.num_elements(); ++i)
+    {
+        dst[i] = dequantize_qsymm16(src[i], quantization_info);
     }
     return dst;
 }
@@ -306,9 +295,9 @@ std::pair<int, int> get_quantized_bounds(const QuantizationInfo &quant_info, flo
 {
     ARM_COMPUTE_ERROR_ON_MSG(min > max, "min must be lower equal than max");
 
-    const int min_bound = quant_info.quantize(min, RoundingPolicy::TO_NEAREST_UP);
-    const int max_bound = quant_info.quantize(max, RoundingPolicy::TO_NEAREST_UP);
-    return std::pair<int, int>(min_bound, max_bound);
+    const int min_bound = quantize_qasymm8(min, quant_info.uniform());
+    const int max_bound = quantize_qasymm8(max, quant_info.uniform());
+    return std::pair<int, int> { min_bound, max_bound };
 }
 
 template void get_tile(const SimpleTensor<float> &in, SimpleTensor<float> &roi, const Coordinates &coord);

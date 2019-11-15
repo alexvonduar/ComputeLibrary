@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 ARM Limited.
+ * Copyright (c) 2016-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,6 +111,20 @@ public:
     {
         add_tensor_argument<1>(idx, tensor, window);
     }
+    /** Add the passed 1D tensor's parameters to the object's kernel's arguments starting from the index idx if the condition is true.
+     *
+     * @param[in]     cond   Condition to check
+     * @param[in,out] idx    Index at which to start adding the tensor's arguments. Will be incremented by the number of kernel arguments set.
+     * @param[in]     tensor Tensor to set as an argument of the object's kernel.
+     * @param[in]     window Window the kernel will be executed on.
+     */
+    void add_1D_tensor_argument_if(bool cond, unsigned int &idx, const ICLTensor *tensor, const Window &window)
+    {
+        if(cond)
+        {
+            add_1D_tensor_argument(idx, tensor, window);
+        }
+    }
     /** Add the passed 2D tensor's parameters to the object's kernel's arguments starting from the index idx.
      *
      * @param[in,out] idx    Index at which to start adding the tensor's arguments. Will be incremented by the number of kernel arguments set.
@@ -120,6 +134,20 @@ public:
     void add_2D_tensor_argument(unsigned int &idx, const ICLTensor *tensor, const Window &window)
     {
         add_tensor_argument<2>(idx, tensor, window);
+    }
+    /** Add the passed 2D tensor's parameters to the object's kernel's arguments starting from the index idx if the condition is true.
+     *
+     * @param[in]     cond   Condition to check
+     * @param[in,out] idx    Index at which to start adding the tensor's arguments. Will be incremented by the number of kernel arguments set.
+     * @param[in]     tensor Tensor to set as an argument of the object's kernel.
+     * @param[in]     window Window the kernel will be executed on.
+     */
+    void add_2D_tensor_argument_if(bool cond, unsigned int &idx, const ICLTensor *tensor, const Window &window)
+    {
+        if(cond)
+        {
+            add_2D_tensor_argument(idx, tensor, window);
+        }
     }
     /** Add the passed 3D tensor's parameters to the object's kernel's arguments starting from the index idx.
      *
@@ -308,14 +336,16 @@ private:
  *
  * @note If kernel->kernel() is empty then the function will return without adding anything to the queue.
  *
- * @param[in,out] queue    OpenCL command queue.
- * @param[in]     kernel   Kernel to enqueue
- * @param[in]     window   Window the kernel has to process.
- * @param[in]     lws_hint Local workgroup size requested. Default is based on the device target.
+ * @param[in,out] queue                OpenCL command queue.
+ * @param[in]     kernel               Kernel to enqueue
+ * @param[in]     window               Window the kernel has to process.
+ * @param[in]     lws_hint             (Optional) Local workgroup size requested. Default is based on the device target.
+ * @param[in]     use_dummy_work_items (Optional) Use dummy work items in order to have two dimensional power of two NDRange. Default is false
+ *                                     Note: it is kernel responsibility to check if the work-item is out-of-range
  *
  * @note If any dimension of the lws is greater than the global workgroup size then no lws will be passed.
  */
-void enqueue(cl::CommandQueue &queue, ICLKernel &kernel, const Window &window, const cl::NDRange &lws_hint = CLKernelLibrary::get().default_ndrange());
+void enqueue(cl::CommandQueue &queue, ICLKernel &kernel, const Window &window, const cl::NDRange &lws_hint = CLKernelLibrary::get().default_ndrange(), bool use_dummy_work_items = false);
 
 /** Add the passed array's parameters to the object's kernel's arguments starting from the index idx.
  *

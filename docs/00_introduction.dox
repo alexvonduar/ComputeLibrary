@@ -73,6 +73,7 @@ You should have the following file organisation:
 
 	.
 	├── arm_compute --> All the arm_compute headers
+	│   ├── graph.h --> Includes all the Graph headers at once.
 	│   ├── core
 	│   │   ├── CL
 	│   │   │   ├── CLKernelLibrary.h --> Manages all the OpenCL kernels compilation and caching, provides accessors for the OpenCL Context.
@@ -163,7 +164,6 @@ You should have the following file organisation:
 	│   ├── graph_*.cpp --> Graph examples
 	│   ├── neoncl_*.cpp --> NEON / OpenCL interoperability examples
 	│   └── neon_*.cpp --> NEON examples
-	├── graph.h --> Includes all the Graph headers at once.
 	├── include
 	│   ├── CL
 	│   │   └── Khronos OpenCL C headers and C++ wrapper
@@ -208,8 +208,6 @@ You should have the following file organisation:
 	│   │   └── Datasets for all the validation / benchmark tests, layer configurations for various networks, etc.
 	│   ├── framework
 	│   │   └── Boiler plate code for both validation and benchmark test suites (Command line parsers, instruments, output loggers, etc.)
-	│   ├── networks
-	│   │   └── Examples of how to instantiate networks.
 	│   └── validation --> Sources for validation
 	│       ├── Validation specific files
 	│       ├── fixtures
@@ -237,6 +235,133 @@ If there is more than one release in a month then an extra sequential number is 
 @note We're aiming at releasing one major public release with new features per quarter. All releases in between will only contain bug fixes.
 
 @subsection S2_2_changelog Changelog
+
+v19.08 Public major release
+ - Various bug fixes.
+ - Various optimisations.
+ - Deprecated NEON functions
+    - NEDepthConcatenateLayer
+    - NEWidthConcatenateLayer
+ - Deprecated OpenCL kernels / functions
+    - CLDepthConcatenateLayer
+    - CLGEMMInterleave4x4Kernel / CLGEMMInterleave4x4
+    - CLGEMMTranspose1xWKernel / CLGEMMTranspose1xW
+    - CLWidthConcatenateLayer
+ - New NEON kernels / functions:
+    - @ref NEAbsLayer
+    - @ref NECast
+    - @ref NEElementwisePower
+    - @ref NELogLayer
+    - @ref NELSTMLayerQuantized
+    - @ref NENegLayer
+    - @ref NEPReluLayer
+    - @ref NESinLayer
+    - @ref NEBatchConcatenateLayerKernel
+    - @ref NEDepthToSpaceLayerKernel / @ref NEDepthToSpaceLayer
+    - @ref NEDepthwiseConvolutionLayerNativeKernel
+    - @ref NEGEMMLowpQuantizeDownInt32ToInt16ScaleByFixedPointKernel
+    - @ref NEMeanStdDevNormalizationKernel / @ref NEMeanStdDevNormalizationLayer
+    - @ref NESpaceToDepthLayerKernel / @ref NESpaceToDepthLayer
+ - New OpenCL kernels / functions:
+    - @ref CLAbsLayer
+    - @ref CLElementwisePower
+    - @ref CLLogLayer
+    - @ref CLLSTMLayerQuantized
+    - @ref CLNegLayer
+    - @ref CLPReluLayer
+    - @ref CLSinLayer
+    - @ref CLBatchConcatenateLayerKernel
+    - @ref CLDepthToSpaceLayerKernel / @ref CLDepthToSpaceLayer
+    - @ref CLGEMMLowpMatrixMultiplyNativeKernel
+    - @ref CLGEMMLowpQuantizeDownInt32ToInt16ScaleByFixedPointKernel
+    - @ref CLGEMMMatrixMultiplyNativeKernel
+    - @ref CLMeanStdDevNormalizationKernel / @ref CLMeanStdDevNormalizationLayer
+    - @ref CLSpaceToDepthLayerKernel / @ref CLSpaceToDepthLayer
+ - New examples:
+    - neon_opticalflow
+    - cl_cache
+    - neon_permute
+ - Added support for FP16 in @ref NEDeconvolutionLayer
+ - Added support for FP16 in @ref CLDeconvolutionLayer
+ - Added support for REDUCE_MIN and REDUCE_MAX in @ref ReductionOperation
+ - Enable the fusion of batch normalization with convolution and depthwise convolution layer for FP32 in the graph API (OpenCL only)
+ - Added support for fusing activation function and broadcast addition with the matrix multiplication for FP32 (OpenCL only)
+ - Re-factored the depthwise convolution layer kernel on NEON for generic cases
+ - Added an optimized depthwise convolution layer kernel for 5x5 filters (NEON only)
+ - Added support to enable OpenCL kernel cache. Added example showing how to load the prebuilt OpenCL kernels from a binary cache file
+ - Altered @ref QuantizationInfo interface to support per-channel quantization.
+ - The @ref NEDepthwiseConvolutionLayer3x3 will be replaced by @ref NEDepthwiseConvolutionLayerOptimized to accommodate for future optimizations.
+ - Removed inner_border_right and inner_border_top parameters from @ref CLDeconvolutionLayer interface
+ - Removed inner_border_right and inner_border_top parameters from @ref NEDeconvolutionLayer interface
+ - Optimized the NEON assembly kernel for GEMMLowp. The new implementation fuses the output stage and quantization with the matrix multiplication kernel
+
+v19.05 Public major release
+ - Various bug fixes.
+ - Various optimisations.
+ - New Neon kernels / functions:
+    - @ref NEBatchToSpaceLayerKernel / @ref NEBatchToSpaceLayer
+    - @ref NEComplexPixelWiseMultiplicationKernel / @ref NEComplexPixelWiseMultiplication
+    - @ref NECropKernel / @ref NECropResize
+    - @ref NEDepthwiseConvolutionAssemblyDispatch
+    - @ref NEFFTDigitReverseKernel
+    - @ref NEFFTRadixStageKernel
+    - @ref NEFFTScaleKernel
+    - @ref NEGEMMLowpOffsetContributionOutputStageKernel
+    - @ref NEHeightConcatenateLayerKernel
+    - @ref NESpaceToBatchLayerKernel / @ref NESpaceToBatchLayer
+    - @ref NEFFT1D
+    - @ref NEFFT2D
+    - @ref NEFFTConvolutionLayer
+ - New OpenCL kernels / functions:
+    - @ref CLComplexPixelWiseMultiplicationKernel / @ref CLComplexPixelWiseMultiplication
+    - @ref CLCropKernel / @ref CLCropResize
+    - @ref CLDeconvolutionReshapeOutputKernel
+    - @ref CLFFTDigitReverseKernel
+    - @ref CLFFTRadixStageKernel
+    - @ref CLFFTScaleKernel
+    - @ref CLGEMMLowpMatrixMultiplyReshapedOnlyRHSKernel
+    - @ref CLGEMMMatrixMultiplyReshapedOnlyRHSKernel
+    - @ref CLHeightConcatenateLayerKernel
+    - @ref CLDirectDeconvolutionLayer
+    - @ref CLFFT1D
+    - @ref CLFFT2D
+    - @ref CLFFTConvolutionLayer
+    - @ref CLGEMMDeconvolutionLayer
+ - New OpenGLES kernels / functions:
+    - @ref GCConcatenateLayer
+ - Deprecated functions/interfaces
+    - GCDepthConcatenateLayer
+    - NEWidthConcatenateLayer
+    - NEDepthConcatenateLayer
+    - CLWidthConcatenateLayer
+    - CLDepthConcatenateLayer
+    - CLGEMMInterleave4x4
+    - CLGEMMTranspose1xW
+ - Support different quantization info in CLConcatLayer.
+ - Add checks on different input/output quantization info were not supported.
+ - Tensors have different quantization information.
+ - Add FP16 support checks.
+ - Fix output quantization CLDeptwiseConv3x3 when activation is fused.
+ - New graph examples:
+     - graph_convolution
+     - graph_fully_connected
+     - graph_depthwise_convolution
+     - Deepspeech v0.4.1
+ - Add support for QASYMM8 in NEArithmeticSubtractionKernel.
+ - Add support for QASYMM8 in NEPixelWiseMultiplicationKernel.
+ - Add support for QASYMM8 NEDeconvolution.
+ - Add support for DequantizationLayer for NEON/CL.
+ - Add support for dilation in CLDepthwiseConvolution.
+ - Fuse offset contribution with the output stage when we use NEGEMMLowpMatrixMultiplyCore.
+ - Optimize CLDeconvolution.
+ - Add StackLayer to the graph API.
+ - Add support for "reflect" padding mode in NEPad.
+ - Winograd 7x7 NHWC on OpenCL.
+ - Rework CL ML layers to run exclusively on CL.
+ - Support different quantization info in PoolingLayer.
+ - Implement and test import memory interfaces.
+ - Added new tests and removed old ones.
+ - Various clang-tidy fixes.
 
 v19.02 Public major release
  - Various bug fixes.
@@ -362,7 +487,7 @@ v18.11 Public major release
  - Added documentation for add a new function or kernel.
  - Improved doxygen documentation adding a list of the existing functions.
  - Add 4D tensors support to
-    - @ref CLWidthConcatenateLayer
+    - CLWidthConcatenateLayer
     - @ref CLFlattenLayer
     - @ref CLSoftmaxLayer
  - Add dot product support for @ref CLDepthwiseConvolutionLayer3x3NHWCKernel non-unit stride
@@ -391,7 +516,7 @@ v18.08 Public major release
  - Removed support for QS8/QS16 data types.
  - Added support for grouped convolution in @ref CLConvolutionLayer.
  - Added NHWC data layout support to:
-    - @ref NEDepthConcatenateLayer / @ref CLDepthConcatenateLayer
+    - NEDepthConcatenateLayer / CLDepthConcatenateLayer
     - @ref NEWinogradConvolutionLayer / @ref CLWinogradConvolutionLayer
     - @ref CLDepthwiseConvolutionLayer
     - @ref CLDirectConvolutionLayer
@@ -434,7 +559,7 @@ v18.05 Public major release
     - @ref CLCopy / @ref CLCopyKernel
     - @ref CLLSTMLayer
     - @ref CLRNNLayer
-    - @ref CLWidthConcatenateLayer / @ref CLWidthConcatenateLayerKernel
+    - CLWidthConcatenateLayer / @ref CLWidthConcatenateLayerKernel
     - @ref CLWinogradFilterTransformKernel / @ref CLWinogradInputTransformKernel / @ref CLWinogradConvolutionLayer
     - @ref CLWinogradInputTransformKernel / @ref CLWinogradInputTransform
  - New Neon kernels / functions:
@@ -557,7 +682,7 @@ v17.12 Public major release
     - @ref GCActivationLayerKernel / @ref GCActivationLayer
     - @ref GCBatchNormalizationLayerKernel / @ref GCBatchNormalizationLayer
     - @ref GCCol2ImKernel
-    - @ref GCDepthConcatenateLayerKernel / @ref GCDepthConcatenateLayer
+    - @ref GCDepthConcatenateLayerKernel / GCDepthConcatenateLayer
     - @ref GCDirectConvolutionLayerKernel / @ref GCDirectConvolutionLayer
     - @ref GCDropoutLayerKernel / @ref GCDropoutLayer
     - @ref GCFillBorderKernel / @ref GCFillBorder
@@ -626,7 +751,7 @@ v17.09 Public major release
     - @ref CLDirectConvolutionLayerKernel / @ref CLDirectConvolutionLayer
     - @ref CLFlattenLayer
     - @ref CLFloorKernel / @ref CLFloor
-    - @ref CLGEMMTranspose1xW
+    - CLGEMMTranspose1xW
     - @ref CLGEMMMatrixVectorMultiplyKernel
     - @ref CLL2NormalizeLayerKernel / @ref CLL2NormalizeLayer
     - @ref CLQuantizationLayerKernel @ref CLMinMaxLayerKernel / @ref CLQuantizationLayer
@@ -645,7 +770,7 @@ v17.06 Public major release
  - User can specify his own scheduler by implementing the @ref IScheduler interface.
  - New OpenCL kernels / functions:
     - @ref CLBatchNormalizationLayerKernel / @ref CLBatchNormalizationLayer
-    - @ref CLDepthConcatenateLayerKernel / @ref CLDepthConcatenateLayer
+    - @ref CLDepthConcatenateLayerKernel / CLDepthConcatenateLayer
     - @ref CLHOGOrientationBinningKernel @ref CLHOGBlockNormalizationKernel, @ref CLHOGDetectorKernel / @ref CLHOGDescriptor @ref CLHOGDetector @ref CLHOGGradient @ref CLHOGMultiDetection
     - @ref CLLocallyConnectedMatrixMultiplyKernel / @ref CLLocallyConnectedLayer
     - @ref CLWeightsReshapeKernel / @ref CLConvolutionLayerReshapeWeights
@@ -653,7 +778,7 @@ v17.06 Public major release
     - @ref CPPDetectionWindowNonMaximaSuppressionKernel
  - New NEON kernels / functions:
     - @ref NEBatchNormalizationLayerKernel / @ref NEBatchNormalizationLayer
-    - @ref NEDepthConcatenateLayerKernel / @ref NEDepthConcatenateLayer
+    - @ref NEDepthConcatenateLayerKernel / NEDepthConcatenateLayer
     - @ref NEDirectConvolutionLayerKernel / @ref NEDirectConvolutionLayer
     - @ref NELocallyConnectedMatrixMultiplyKernel / @ref NELocallyConnectedLayer
     - @ref NEWeightsReshapeKernel / @ref NEConvolutionLayerReshapeWeights
@@ -704,7 +829,7 @@ v17.03.1 First Major public release of the sources
 v17.03 Sources preview
  - New OpenCL kernels / functions:
    - @ref CLGradientKernel, @ref CLEdgeNonMaxSuppressionKernel, @ref CLEdgeTraceKernel / @ref CLCannyEdge
-   - GEMM refactoring + FP16 support: @ref CLGEMMInterleave4x4Kernel, @ref CLGEMMTranspose1xWKernel, @ref CLGEMMMatrixMultiplyKernel, @ref CLGEMMMatrixAdditionKernel / @ref CLGEMM
+   - GEMM refactoring + FP16 support: CLGEMMInterleave4x4Kernel, CLGEMMTranspose1xWKernel, @ref CLGEMMMatrixMultiplyKernel, @ref CLGEMMMatrixAdditionKernel / @ref CLGEMM
    - @ref CLGEMMMatrixAccumulateBiasesKernel / @ref CLFullyConnectedLayer
    - @ref CLTransposeKernel / @ref CLTranspose
    - @ref CLLKTrackerInitKernel, @ref CLLKTrackerStage0Kernel, @ref CLLKTrackerStage1Kernel, @ref CLLKTrackerFinalizeKernel / @ref CLOpticalFlow
@@ -1041,7 +1166,7 @@ For Android, the library was successfully built and tested using Google's standa
 Here is a guide to <a href="https://developer.android.com/ndk/guides/standalone_toolchain.html">create your Android standalone toolchains from the NDK</a>
 
 - Download the NDK r17b from here: https://developer.android.com/ndk/downloads/index.html
-- Make sure you have Python 2 installed on your machine.
+- Make sure you have Python 2.7 installed on your machine.
 - Generate the 32 and/or 64 toolchains by running the following commands:
 
 
@@ -1170,20 +1295,20 @@ recommended to follow one of the options outlined below.
 
 @subsubsection S3_5_1_ubuntu_on_windows Bash on Ubuntu on Windows
 
-The best and easiest option is to use 
-<a href="https://msdn.microsoft.com/en-gb/commandline/wsl/about">Ubuntu on Windows</a>. 
+The best and easiest option is to use
+<a href="https://msdn.microsoft.com/en-gb/commandline/wsl/about">Ubuntu on Windows</a>.
 This feature is still marked as *beta* and thus might not be available.
 However, if it is building the library is as simple as opening a *Bash on
 Ubuntu on Windows* shell and following the general guidelines given above.
 
 @subsubsection S3_5_2_cygwin Cygwin
 
-If the Windows subsystem for Linux is not available <a href="https://www.cygwin.com/">Cygwin</a> 
-can be used to install and run `scons`. In addition to the default packages
-installed by Cygwin `scons` has to be selected in the installer. (`git` might
+If the Windows subsystem for Linux is not available <a href="https://www.cygwin.com/">Cygwin</a>
+can be used to install and run `scons`, the minimum Cygwin version must be 3.0.7 or later. In addition
+to the default packages installed by Cygwin `scons` has to be selected in the installer. (`git` might
 also be useful but is not strictly required if you already have got the source
-code of the library.) Linaro provides pre-built versions of 
-<a href="http://releases.linaro.org/components/toolchain/binaries/">GCC cross-compilers</a> 
+code of the library.) Linaro provides pre-built versions of
+<a href="http://releases.linaro.org/components/toolchain/binaries/">GCC cross-compilers</a>
 that can be used from the Cygwin terminal. When building for Android the
 compiler is included in the Android standalone toolchain. After everything has
 been set up in the Cygwin terminal the general guide on building the library
@@ -1253,7 +1378,7 @@ SVM allocations are supported for all the underlying allocations in Compute Libr
 
 The OpenCL tuner, a.k.a. CLTuner, is a module of Arm Compute Library that can improve the performance of the OpenCL kernels tuning the Local-Workgroup-Size (LWS).
 The optimal LWS for each unique OpenCL kernel configuration is stored in a table. This table can be either imported or exported from/to a file.
-The OpenCL tuner performs a brute-force approach: it runs the same OpenCL kernel for a range of local workgroup sizes and keep the local workgroup size of the fastest run to use in subsequent calls to the kernel.
+The OpenCL tuner runs the same OpenCL kernel for a range of local workgroup sizes and keeps the local workgroup size of the fastest run to use in subsequent calls to the kernel. It supports three modes of tuning with different trade-offs between the time taken to tune and the kernel execution time achieved using the best LWS found. In the Exhaustive mode, it searches all the supported values of LWS. This mode takes the longest time to tune and is the most likely to find the optimal LWS. Normal mode searches a subset of LWS values to yield a good approximation of the optimal LWS. It takes less time to tune than Exhaustive mode. Rapid mode takes the shortest time to tune and finds an LWS value that is at least as good or better than the default LWS value. The mode affects only the search for the optimal LWS and has no effect when the LWS value is imported from a file.
 In order for the performance numbers to be meaningful you must disable the GPU power management and set it to a fixed frequency for the entire duration of the tuning phase.
 
 If you wish to know more about LWS and the important role on improving the GPU cache utilization, we suggest having a look at the presentation "Even Faster CNNs: Exploring the New Class of Winograd Algorithms available at the following link:

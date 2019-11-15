@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@
 #include "arm_compute/core/Utils.h"
 #include "arm_compute/core/Validate.h"
 #include "arm_compute/core/Window.h"
-
+#include "arm_compute/core/utils/helpers/float_ops.h"
 #include "arm_compute/core/utils/misc/ShapeCalculator.h"
 
 #include <arm_neon.h>
@@ -388,7 +388,7 @@ void matrix_matrix_multiply_f32(const ITensor *input0, const ITensor *input1, IT
     // The implementation assumes that the matrix A and Matrix B have been reshaped respectively with NEGEMMInterleave4x4 and NEGEMMTranspose1xW
     // The reshaping of the matrices helps to have a cache friendly implementation and helps to avoid the data re-arrangements needed for computing 16x4 elements per iteration
     // All the values needed for computing a single 4x4 block will be read from consecutive memory positions
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         auto mtx_a0 = reinterpret_cast<const float *>(ina.ptr());
         auto mtx_b0 = reinterpret_cast<const float *>(inb.ptr());
@@ -687,7 +687,7 @@ void matrix_matrix_multiply_f16(const ITensor *input0, const ITensor *input1, IT
 
     const float16x8_t alpha_f16 = vdupq_n_f16(alpha);
 
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         const auto   *mtx_a0  = reinterpret_cast<const float16_t *>(ina.ptr());
         const auto   *mtx_b0  = reinterpret_cast<const float16_t *>(inb.ptr());
@@ -998,7 +998,7 @@ void NEGEMMMatrixMultiplyKernel::run(const Window &window, const ThreadInfo &inf
     ARM_COMPUTE_ERROR_ON_UNCONFIGURED_KERNEL(this);
     ARM_COMPUTE_ERROR_ON_INVALID_SUBWINDOW(INEKernel::window(), window);
 
-    bool multiply_alpha = std::abs(1.0f - _alpha) > 0.00001f;
+    const bool multiply_alpha = !(helpers::float_ops::is_one(_alpha));
 
     // Check if the output tensor is a vector. If so,the kernel runs the vector-matrix multiplication
     if((_output->info()->dimension(1) == 1))

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,8 @@
  */
 #include "DequantizationLayer.h"
 
+#include "Permute.h"
+
 namespace arm_compute
 {
 namespace test
@@ -31,36 +33,89 @@ namespace validation
 {
 namespace reference
 {
-template <typename T, typename std::enable_if<std::is_integral<T>::value, int>::type>
-SimpleTensor<float> dequantization_layer(const SimpleTensor<T> &src, const SimpleTensor<float> &min_max)
+namespace
 {
-    // Create reference
-    SimpleTensor<float> dst{ src.shape(), DataType::F32 };
+template <typename TOut>
+TOut dequantize(int8_t val, const UniformQuantizationInfo qinfo)
+{
+    return static_cast<TOut>(dequantize_qsymm8(val, qinfo));
+}
+template <typename TOut>
+TOut dequantize(uint8_t val, const UniformQuantizationInfo qinfo)
+{
+    return static_cast<TOut>(dequantize_qasymm8(val, qinfo));
+}
+template <typename TOut>
+TOut dequantize(int16_t val, const UniformQuantizationInfo qinfo)
+{
+    return static_cast<TOut>(dequantize_qsymm16(val, qinfo));
+}
 
-    // Compute reference
-    const int width       = src.shape().x();
-    const int height      = src.shape().y();
-    const int depth       = src.shape().z();
-    const int stride_w    = width * height * depth;
-    const int num_batches = min_max.shape().total_size_upper(1);
+template <typename TOut, typename TIn>
+SimpleTensor<TOut> dequantization_layer_nchw(const SimpleTensor<TIn> &src)
+{
+    const DataType src_data_type = src.data_type();
+    const DataType dst_data_type = std::is_same<TOut, float>::value ? DataType::F32 : DataType::F16;
 
-    for(int k = 0; k < num_batches; ++k)
+    SimpleTensor<TOut> dst{ src.shape(), dst_data_type };
+
+    if(src_data_type == DataType::QSYMM8_PER_CHANNEL)
     {
-        const float min     = min_max[k * 2 + 0];
-        const float max     = min_max[k * 2 + 1];
-        const float range   = max - min;
-        const float scaling = range / 255.0f;
+        const int WH = src.shape().x() * src.shape().y();
+        const int C  = src.shape().z();
+        const int N  = src.shape().total_size() / (WH * C);
 
-        for(int i = 0; i < stride_w; ++i)
+        const std::vector<float> qscales = src.quantization_info().scale();
+
+        for(int n = 0; n < N; ++n)
         {
-            dst[i + k * stride_w] = (static_cast<float>(src[i + k * stride_w]) * scaling) + min;
+            for(int c = 0; c < C; ++c)
+            {
+                const size_t                  idx           = n * C * WH + c * WH;
+                const UniformQuantizationInfo channel_qinfo = { qscales[c], 0 };
+
+                // Dequantize slice
+                for(int s = 0; s < WH; ++s)
+                {
+                    dst[idx + s] = dequantize<TOut>(static_cast<TIn>(src[idx + s]), channel_qinfo);
+                }
+            }
+        }
+    }
+    else
+    {
+        const UniformQuantizationInfo &quantization_info = src.quantization_info().uniform();
+        ARM_COMPUTE_ERROR_ON(quantization_info.offset != 0 && src_data_type == DataType::QSYMM8);
+
+        for(int i = 0; i < src.num_elements(); ++i)
+        {
+            dst[i] = static_cast<TOut>(dequantize<TOut>(static_cast<TIn>(src[i]), quantization_info));
         }
     }
 
     return dst;
 }
+} // namespace
+template <typename TOut, typename TIn>
+SimpleTensor<TOut> dequantization_layer(const SimpleTensor<TIn> &src)
+{
+    if(src.data_layout() == DataLayout::NHWC && src.data_type() == DataType::QSYMM8_PER_CHANNEL)
+    {
+        SimpleTensor<TIn> src_nchw = reference::permute<TIn>(src, PermutationVector(1U, 2U, 0U));
+        return reference::permute<TOut>(dequantization_layer_nchw<TOut>(src_nchw), PermutationVector(2U, 0U, 1U));
+    }
+    else
+    {
+        return dequantization_layer_nchw<TOut>(src);
+    }
+}
 
-template SimpleTensor<float> dequantization_layer(const SimpleTensor<uint8_t> &src, const SimpleTensor<float> &min_max);
+template SimpleTensor<half> dequantization_layer(const SimpleTensor<uint8_t> &src);
+template SimpleTensor<float> dequantization_layer(const SimpleTensor<uint8_t> &src);
+template SimpleTensor<half> dequantization_layer(const SimpleTensor<int8_t> &src);
+template SimpleTensor<float> dequantization_layer(const SimpleTensor<int8_t> &src);
+template SimpleTensor<half> dequantization_layer(const SimpleTensor<int16_t> &src);
+template SimpleTensor<float> dequantization_layer(const SimpleTensor<int16_t> &src);
 } // namespace reference
 } // namespace validation
 } // namespace test

@@ -26,6 +26,7 @@
 
 #include "arm_compute/core/Helpers.h"
 #include "arm_compute/core/ITensorInfo.h"
+#include "arm_compute/core/KernelDescriptors.h"
 #include "arm_compute/core/Utils.h"
 
 #include "arm_compute/core/utils/helpers/tensor_transform.h"
@@ -402,10 +403,12 @@ inline TensorShape compute_transposed_shape(const ITensorInfo &input)
  * @param[in] weights          Weights tensor info
  * @param[in] conv_info        Padding and stride information to use for the convolution.
  * @param[in] depth_multiplier Multiplier to apply to the input's depth in order to retrieve the output's depth.
+ * @param[in] dilation         Dilation, in elements, across x and y. Defaults to (1, 1).
  *
  * @return the calculated shape
  */
-inline TensorShape compute_depthwise_convolution_shape(const ITensorInfo &input, const ITensorInfo &weights, PadStrideInfo conv_info, unsigned int depth_multiplier)
+inline TensorShape compute_depthwise_convolution_shape(const ITensorInfo &input, const ITensorInfo &weights, PadStrideInfo conv_info, unsigned int depth_multiplier, const Size2D &dilation = Size2D(1U,
+                                                       1U))
 {
     const TensorShape input_shape{ input.tensor_shape() };
     const TensorShape weights_shape{ weights.tensor_shape() };
@@ -415,43 +418,15 @@ inline TensorShape compute_depthwise_convolution_shape(const ITensorInfo &input,
     const int        height_idx  = get_data_layout_dimension_index(data_layout, DataLayoutDimension::HEIGHT);
     const int        channel_idx = get_data_layout_dimension_index(data_layout, DataLayoutDimension::CHANNEL);
 
-    unsigned int output_width  = 0;
-    unsigned int output_height = 0;
-    std::tie(output_width, output_height) = scaled_dimensions(input_shape[width_idx], input_shape[height_idx],
-                                                              weights_shape[width_idx], weights_shape[height_idx],
-                                                              conv_info);
-
-    TensorShape output_shape{ input_shape };
-    output_shape.set(width_idx, output_width);
-    output_shape.set(height_idx, output_height);
-    output_shape.set(channel_idx, input_shape[channel_idx] * depth_multiplier);
-
-    return output_shape;
-}
-
-/** Calculate the depthwise convolution output shape of a tensor
- *
- * @param[in] input            Input tensor info
- * @param[in] weights_width    Weights width
- * @param[in] weights_height   Weights height
- * @param[in] conv_info        Padding and stride information to use for the convolution.
- * @param[in] depth_multiplier Multiplier to apply to the input's depth in order to retrieve the output's depth.
- *
- * @return the calculated shape
- */
-inline TensorShape compute_depthwise_convolution_shape(const ITensorInfo &input, int weights_width, int weights_height, PadStrideInfo conv_info, unsigned int depth_multiplier)
-{
-    const TensorShape input_shape{ input.tensor_shape() };
-
-    const DataLayout data_layout = input.data_layout();
-    const int        width_idx   = get_data_layout_dimension_index(data_layout, DataLayoutDimension::WIDTH);
-    const int        height_idx  = get_data_layout_dimension_index(data_layout, DataLayoutDimension::HEIGHT);
-    const int        channel_idx = get_data_layout_dimension_index(data_layout, DataLayoutDimension::CHANNEL);
+    const DataLayout weights_data_layout = weights.data_layout();
+    const int        weights_width_idx   = get_data_layout_dimension_index(weights_data_layout, DataLayoutDimension::WIDTH);
+    const int        weights_height_idx  = get_data_layout_dimension_index(weights_data_layout, DataLayoutDimension::HEIGHT);
 
     unsigned int output_width  = 0;
     unsigned int output_height = 0;
     std::tie(output_width, output_height) = scaled_dimensions(input_shape[width_idx], input_shape[height_idx],
-                                                              weights_width, weights_width, conv_info);
+                                                              weights_shape[weights_width_idx], weights_shape[weights_height_idx],
+                                                              conv_info, dilation);
 
     TensorShape output_shape{ input_shape };
     output_shape.set(width_idx, output_width);
@@ -463,20 +438,17 @@ inline TensorShape compute_depthwise_convolution_shape(const ITensorInfo &input,
 
 /** Calculate the upsampled output shape used for deconvolution
  *
- * @param[in] input              Input tensor info
- * @param[in] weights            Weights tensor shape
- * @param[in] sx                 Stride on x axis
- * @param[in] sy                 Stride on y axis
- * @param[in] inner_border_right The number of zeros added to right edge of the input.
- * @param[in] inner_border_top   The number of zeros added to top edge of the input.
- * @param[in] out_dims           Output shape dimensions
- * @param[in] padx               Padding on x axis
- * @param[in] pady               Padding on y axis
+ * @param[in] input    Input tensor info
+ * @param[in] weights  Weights tensor shape
+ * @param[in] sx       Stride on x axis
+ * @param[in] sy       Stride on y axis
+ * @param[in] out_dims Output shape dimensions
+ * @param[in] padx     Padding on x axis
+ * @param[in] pady     Padding on y axis
  *
  * @return the calculated shape
  */
-inline TensorShape compute_deconvolution_upsampled_shape(const ITensorInfo &input, const ITensorInfo &weights, unsigned int sx, unsigned int sy, unsigned int inner_border_right,
-                                                         unsigned int inner_border_top,
+inline TensorShape compute_deconvolution_upsampled_shape(const ITensorInfo &input, const ITensorInfo &weights, unsigned int sx, unsigned int sy,
                                                          std::pair<unsigned int, unsigned int> &out_dims, unsigned int &padx, unsigned int &pady)
 {
     const DataLayout data_layout = input.data_layout();
@@ -484,8 +456,8 @@ inline TensorShape compute_deconvolution_upsampled_shape(const ITensorInfo &inpu
     const size_t     idx_h       = get_data_layout_dimension_index(data_layout, DataLayoutDimension::HEIGHT);
 
     // Find the upsampled dimensions
-    unsigned int out_x = (input.dimension(idx_w) - 1) * sx + inner_border_right + 1;
-    unsigned int out_y = (input.dimension(idx_h) - 1) * sy + inner_border_top + 1;
+    unsigned int out_x = (input.dimension(idx_w) - 1) * sx + 1;
+    unsigned int out_y = (input.dimension(idx_h) - 1) * sy + 1;
 
     // Find the padding needed for the convolution with stride 1 in order to match output shape
     padx = out_dims.first - (out_x - weights.dimension(idx_w) + 1);
@@ -877,6 +849,8 @@ inline TensorShape compute_mm_shape(const ITensorInfo &input0, const ITensorInfo
 
 /** Calculate the matrix multiplication output shape of two tensors
  *
+ * @note Deprecated. Remove when GEMMReshapeInfo is not used anymore by any other kernels
+ *
  * @param[in] input0    First input tensor info
  * @param[in] input1    Second input tensor info
  * @param[in] gemm_info GEMM reshape info
@@ -887,23 +861,64 @@ inline TensorShape compute_mm_shape(const ITensorInfo &input0, const ITensorInfo
 {
     ARM_COMPUTE_ERROR_ON_MSG(input0.num_dimensions() > 4, "The number of dimensions for the matrix A must be <= 4");
 
+    const bool reinterpret_input_as_3d  = gemm_info.reinterpret_input_as_3d();
     const bool reinterpret_output_as_3d = gemm_info.depth_output_gemm3d() != 0;
     const int  depth_output_gemm3d      = reinterpret_output_as_3d ? gemm_info.depth_output_gemm3d() : 1;
 
-    // If the output of GEMM has to be reinterpreted as 3D, the number of input0 rows (M) is obtained collapsing the second and third
-    // dimension of the output tensor
-    const int dim0 = gemm_info.n();
-    const int dim1 = gemm_info.m() / depth_output_gemm3d;
-    const int dim2 = input0.tensor_shape()[2];
-    const int dim3 = input0.tensor_shape()[3];
+    TensorShape output_shape{ input0.tensor_shape() };
+
+    if(!reinterpret_input_as_3d && !reinterpret_output_as_3d)
+    {
+        output_shape.set(0, gemm_info.n());
+        output_shape.set(1, gemm_info.m());
+    }
+    else
+    {
+        // If the output of GEMM has to be reinterpreted as 3D, the number of input0 rows (M) is obtained collapsing the second and third
+        // dimension of the output tensor
+        const int batch_size = reinterpret_input_as_3d ? input0.tensor_shape()[3] : input0.tensor_shape()[2];
+        output_shape.set(0, gemm_info.n());
+        output_shape.set(1, gemm_info.m() / depth_output_gemm3d);
+        output_shape.set(2, reinterpret_output_as_3d ? depth_output_gemm3d : batch_size);
+        output_shape.set(3, reinterpret_output_as_3d ? batch_size : 1);
+    }
+
+    return output_shape;
+}
+
+/** Calculate the matrix multiplication output shape of two tensors
+ *
+ * @param[in] input0    First input tensor info
+ * @param[in] input1    Second input tensor info
+ * @param[in] gemm_info GEMM kernel info used to retrieve the original dimensions of the input matrices
+ *
+ * @return the calculated shape
+ */
+inline TensorShape compute_mm_shape(const ITensorInfo &input0, const ITensorInfo &input1, const GEMMKernelInfo &gemm_info)
+{
+    ARM_COMPUTE_ERROR_ON_MSG(input0.num_dimensions() > 4, "The number of dimensions for the matrix A must be <= 4");
+
+    const bool         reinterpret_input_as_3d  = gemm_info.reinterpret_input_as_3d;
+    const bool         reinterpret_output_as_3d = gemm_info.depth_output_gemm3d != 0;
+    const unsigned int depth_output_gemm3d      = reinterpret_output_as_3d ? gemm_info.depth_output_gemm3d : 1;
 
     TensorShape output_shape{ input0.tensor_shape() };
 
-    output_shape.set(0, dim0);
-    output_shape.set(1, dim1);
-    output_shape.set(2, reinterpret_output_as_3d ? depth_output_gemm3d : dim2);
-    output_shape.set(3, reinterpret_output_as_3d ? dim2 : dim3);
-    output_shape.set(4, reinterpret_output_as_3d ? dim3 : 1);
+    if(!reinterpret_input_as_3d && !reinterpret_output_as_3d)
+    {
+        output_shape.set(0, gemm_info.n);
+        output_shape.set(1, gemm_info.m);
+    }
+    else
+    {
+        // If the output of GEMM has to be reinterpreted as 3D, the number of input0 rows (M) is obtained collapsing the second and third
+        // dimension of the output tensor
+        const unsigned int batch_size = reinterpret_input_as_3d ? input0.tensor_shape()[3] : input0.tensor_shape()[2];
+        output_shape.set(0, gemm_info.n);
+        output_shape.set(1, gemm_info.m / depth_output_gemm3d);
+        output_shape.set(2, reinterpret_output_as_3d ? depth_output_gemm3d : batch_size);
+        output_shape.set(3, reinterpret_output_as_3d ? batch_size : 1);
+    }
 
     return output_shape;
 }
@@ -997,6 +1012,30 @@ inline TensorShape compute_batch_to_space_shape(const ITensorInfo *input, const 
     return output_shape;
 }
 
+/** Calculate the depth to space output shape of a tensor
+ *
+ * @param[in] input Input tensor info
+ * @param[in] block Block shape value
+ *
+ * @return the calculated shape
+ */
+inline TensorShape compute_depth_to_space_shape(const ITensorInfo *input, int block)
+{
+    ARM_COMPUTE_ERROR_ON(block < 2);
+
+    const DataLayout data_layout = input->data_layout();
+    const int        idx_width   = get_data_layout_dimension_index(data_layout, DataLayoutDimension::WIDTH);
+    const int        idx_height  = get_data_layout_dimension_index(data_layout, DataLayoutDimension::HEIGHT);
+    const int        idx_channel = get_data_layout_dimension_index(data_layout, DataLayoutDimension::CHANNEL);
+
+    TensorShape output_shape{ input->tensor_shape() };
+    output_shape.set(idx_width, input->dimension(idx_width) * block);
+    output_shape.set(idx_height, input->dimension(idx_height) * block);
+    output_shape.set(idx_channel, input->dimension(idx_channel) / (block * block));
+
+    return output_shape;
+}
+
 /** Calculate the split output shape of a tensor
  *
  * @param[in] input      Input tensor info
@@ -1052,6 +1091,29 @@ inline TensorShape compute_space_to_batch_shape(const ITensorInfo *input, const 
     output_shape.set(idx_width, input->tensor_shape()[idx_width] * block_x + padding_left.x() + padding_right.x());
     output_shape.set(idx_height, input->tensor_shape()[idx_height] * block_y + padding_left.y() + padding_right.y());
     output_shape.set(idx_batch, input->tensor_shape()[idx_batch] / (block_x * block_y));
+
+    return output_shape;
+}
+
+/** Calculate the space to batch output shape of a tensor
+ *
+ * @param[in] input       Input tensor info
+ * @param[in] block_shape Block shape value
+ *
+ * @return the calculated shape
+ */
+inline TensorShape compute_space_to_depth_shape(const ITensorInfo *input, int32_t block_shape)
+{
+    TensorShape output_shape{ input->tensor_shape() };
+
+    const DataLayout data_layout = input->data_layout();
+    const int        idx_width   = get_data_layout_dimension_index(data_layout, DataLayoutDimension::WIDTH);
+    const int        idx_height  = get_data_layout_dimension_index(data_layout, DataLayoutDimension::HEIGHT);
+    const int        idx_depth   = get_data_layout_dimension_index(data_layout, DataLayoutDimension::CHANNEL);
+
+    output_shape.set(idx_width, input->tensor_shape()[idx_width] * block_shape);
+    output_shape.set(idx_height, input->tensor_shape()[idx_height] * block_shape);
+    output_shape.set(idx_depth, input->tensor_shape()[idx_depth] / (block_shape * block_shape));
 
     return output_shape;
 }
@@ -1166,8 +1228,17 @@ inline TensorShape extract_shape(ITensorInfo *data)
 {
     return data->tensor_shape();
 }
+inline TensorShape extract_shape(const ITensorInfo *data)
+{
+    return data->tensor_shape();
+}
 
 inline TensorShape extract_shape(const TensorShape *data)
+{
+    return *data;
+}
+
+inline TensorShape extract_shape(TensorShape *data)
 {
     return *data;
 }
@@ -1186,61 +1257,48 @@ inline TensorShape calculate_unstack_shape(TensorShape input_shape, unsigned int
     return input_shape;
 }
 
-/** Calculate the depth concatenate output shape of a vector of tensors
+/** Calculate the concatenate output shape of the concatenate operation along a single axis
  *
- * @param[in] inputs_vector Vector containing the shapes of the inputs
- *
- * @return the calculated shape
- */
-template <typename T>
-inline TensorShape calculate_depth_concatenate_shape(const std::vector<T *> &inputs_vector)
-{
-    TensorShape out_shape = extract_shape(inputs_vector[0]);
-
-    size_t max_x = 0;
-    size_t max_y = 0;
-    size_t depth = 0;
-
-    for(const auto &tensor : inputs_vector)
-    {
-        ARM_COMPUTE_ERROR_ON(tensor == nullptr);
-        const TensorShape shape = extract_shape(tensor);
-        max_x                   = std::max(shape.x(), max_x);
-        max_y                   = std::max(shape.y(), max_y);
-        depth += shape.z();
-    }
-
-    out_shape.set(0, max_x);
-    out_shape.set(1, max_y);
-    out_shape.set(2, depth);
-
-    return out_shape;
-}
-
-/** Calculate the width concatenate output shape of a vector of tensors
- *
- * @param[in] inputs_vector Vector containing the shapes of the inputs
+ * @param[in] input Vector containing the shapes of the inputs
+ * @param[in] axis  Axis along which to concatenate the input tensors
  *
  * @return the calculated shape
  */
 template <typename T>
-inline TensorShape calculate_width_concatenate_shape(const std::vector<T *> &inputs_vector)
+inline TensorShape calculate_concatenate_shape(const std::vector<T *> &input, size_t axis)
 {
-    TensorShape out_shape = extract_shape(inputs_vector[0]);
+    TensorShape out_shape = extract_shape(input[0]);
 
-    size_t width = 0;
-    for(const auto &tensor : inputs_vector)
+#if defined(ARM_COMPUTE_ASSERTS_ENABLED)
+    // All dimensions must match except the axis one
+    for(unsigned int i = 0; i < MAX_DIMS; ++i)
     {
-        ARM_COMPUTE_ERROR_ON(tensor == nullptr);
+        if(i == axis)
+        {
+            continue;
+        }
+
+        for(const auto &tensor : input)
+        {
+            ARM_COMPUTE_ERROR_ON(tensor == nullptr);
+            const TensorShape shape = extract_shape(tensor);
+            ARM_COMPUTE_ERROR_ON(out_shape[i] != shape[i]);
+        }
+    }
+#endif // defined(ARM_COMPUTE_ASSERTS_ENABLED)
+
+    // Calculate output shape
+    size_t new_size = 0;
+    for(const auto &tensor : input)
+    {
         const TensorShape shape = extract_shape(tensor);
-        width += shape.x();
+        new_size += shape[axis];
     }
 
-    out_shape.set(0, width);
+    out_shape.set(axis, new_size);
 
     return out_shape;
 }
-
 /** Calculate the stack output shape of a tensor
  *
  * @param[in] a           Input tensor info

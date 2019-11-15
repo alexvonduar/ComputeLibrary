@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 ARM Limited.
+ * Copyright (c) 2016-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,14 +37,15 @@ std::string get_cl_type_from_data_type(const DataType &dt)
     switch(dt)
     {
         case DataType::U8:
-            return "uchar";
-        case DataType::S8:
-            return "char";
         case DataType::QASYMM8:
             return "uchar";
+        case DataType::S8:
+        case DataType::QSYMM8:
+            return "char";
         case DataType::U16:
             return "ushort";
         case DataType::S16:
+        case DataType::QSYMM16:
             return "short";
         case DataType::U32:
             return "uint";
@@ -69,15 +70,16 @@ std::string get_cl_select_type_from_data_type(const DataType &dt)
     switch(dt)
     {
         case DataType::U8:
-            return "uchar";
-        case DataType::S8:
-            return "char";
         case DataType::QASYMM8:
             return "uchar";
+        case DataType::S8:
+        case DataType::QSYMM8:
+            return "char";
         case DataType::U16:
             return "ushort";
         case DataType::F16:
         case DataType::S16:
+        case DataType::QSYMM16:
             return "short";
         case DataType::U32:
             return "uint";
@@ -100,10 +102,12 @@ std::string get_data_size_from_data_type(const DataType &dt)
     {
         case DataType::U8:
         case DataType::S8:
+        case DataType::QSYMM8:
         case DataType::QASYMM8:
             return "8";
         case DataType::U16:
         case DataType::S16:
+        case DataType::QSYMM16:
         case DataType::F16:
             return "16";
         case DataType::U32:
@@ -214,7 +218,10 @@ bool cl_winograd_convolution_layer_supported(const Size2D &output_tile, const Si
         WinogradConfiguration(std::pair<int, int>(4, 4), std::pair<int, int>(3, 3)),
         WinogradConfiguration(std::pair<int, int>(4, 4), std::pair<int, int>(5, 5)),
         WinogradConfiguration(std::pair<int, int>(4, 1), std::pair<int, int>(5, 1)),
-        WinogradConfiguration(std::pair<int, int>(1, 4), std::pair<int, int>(1, 5))
+        WinogradConfiguration(std::pair<int, int>(1, 4), std::pair<int, int>(1, 5)),
+        WinogradConfiguration(std::pair<int, int>(1, 2), std::pair<int, int>(1, 7)),
+        WinogradConfiguration(std::pair<int, int>(2, 1), std::pair<int, int>(7, 1)),
+        WinogradConfiguration(std::pair<int, int>(2, 2), std::pair<int, int>(7, 7)),
     };
 
     auto p = std::make_pair(std::pair<int, int>(output_tile.width, output_tile.height),
@@ -238,9 +245,11 @@ size_t preferred_vector_width(const cl::Device &device, const DataType dt)
         case DataType::U8:
         case DataType::S8:
         case DataType::QASYMM8:
+        case DataType::QSYMM8:
             return device.getInfo<CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR>();
         case DataType::U16:
         case DataType::S16:
+        case DataType::QSYMM16:
             return device.getInfo<CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT>();
         case DataType::U32:
         case DataType::S32:
@@ -254,5 +263,12 @@ size_t preferred_vector_width(const cl::Device &device, const DataType dt)
         default:
             return 1;
     }
+}
+
+bool preferred_dummy_work_items_support(const cl::Device &device)
+{
+    ARM_COMPUTE_UNUSED(device);
+    // TODO (COMPMID-2044)
+    return true;
 }
 } // namespace arm_compute

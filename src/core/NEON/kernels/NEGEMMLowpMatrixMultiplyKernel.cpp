@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -479,7 +479,7 @@ void inline vector_matrix_multiply_s8(Iterator &ina, Iterator &inb, Iterator &ou
 
 void inline matrix_multiply_u8(Iterator &ina, Iterator &inb, Iterator &out, int width_b, size_t out_stride, const Window &window)
 {
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         const uint8_t *mtx_a0 = ina.ptr();
         const uint8_t *mtx_b0 = inb.ptr();
@@ -599,7 +599,7 @@ void inline matrix_multiply_s8(Iterator &ina, Iterator &inb, Iterator &out, int 
     // The implementation assumes that the matrix A and Matrix B have been reshaped respectively with NEGEMMInterleave4x4 and NEGEMMTranspose1xW
     // The reshaping of the matrices helps to have a cache friendly implementation and helps to avoid the data re-arrangements needed for computing 16x4 elements per iteration
     // All the values needed for computing a single 4x4 block will be read from consecutive memory positions
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         auto *mtx_a0 = reinterpret_cast<const int8_t *>(ina.ptr());
         auto *mtx_b0 = reinterpret_cast<const int8_t *>(inb.ptr());
@@ -780,9 +780,9 @@ std::pair<Status, Window> validate_and_configure_window(ITensorInfo *input0, ITe
 
         unsigned int num_k_iterations = ceil_to_multiple(input1->dimension(0), num_elems_processed_per_iteration_x) / 16;
         // For each iteration of "k" we increment the input pointer by 4, and we load 8 elements a the time:
-        AccessWindowStatic     in0_access(input0, 0, 0, (num_k_iterations - 1) * 4 + 8, input0->dimension(1));
-        AccessWindowHorizontal in1_access(input1, 0, input1->dimension(0));
-        AccessWindowRectangle  output_access(output, 0, 0, num_elems_processed_per_iteration_x, num_elems_processed_per_iteration_y);
+        AccessWindowStatic    in0_access(input0, 0, 0, (num_k_iterations - 1) * 4 + 8, input0->dimension(1));
+        AccessWindowStatic    in1_access(input1, 0, 0, ceil_to_multiple(input1->dimension(0), num_elems_processed_per_iteration_x), input1->dimension(1));
+        AccessWindowRectangle output_access(output, 0, 0, num_elems_processed_per_iteration_x, num_elems_processed_per_iteration_y);
 
         window_changed = update_window_and_padding(win, in0_access, in1_access, output_access);
 

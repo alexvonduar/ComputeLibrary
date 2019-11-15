@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 ARM Limited.
+ * Copyright (c) 2016-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,12 +30,9 @@
 
 #include <arm_neon.h>
 
-using namespace arm_compute;
-
 namespace arm_compute
 {
 class Coordinates;
-} // namespace arm_compute
 
 NEThresholdKernel::NEThresholdKernel()
     : _func(nullptr), _input(nullptr), _output(nullptr), _threshold(0), _false_value(0), _true_value(0), _upper(0)
@@ -67,7 +64,7 @@ void NEThresholdKernel::configure(const ITensor *input, ITensor *output, uint8_t
             break;
     }
 
-    const unsigned int num_elems_processed_per_iteration = 16;
+    constexpr unsigned int num_elems_processed_per_iteration = 16;
 
     Window                 win = calculate_max_window(*input->info(), Steps(num_elems_processed_per_iteration));
     AccessWindowHorizontal output_access(output->info(), 0, num_elems_processed_per_iteration);
@@ -86,7 +83,7 @@ inline void NEThresholdKernel::run_binary(const Window &window)
     Iterator input(_input, window);
     Iterator output(_output, window);
 
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         const uint8x16_t data = vld1q_u8(input.ptr());
         const uint8x16_t mask = vcgtq_u8(data, threshold);
@@ -106,7 +103,7 @@ inline void NEThresholdKernel::run_range(const Window &window)
     Iterator input(_input, window);
     Iterator output(_output, window);
 
-    execute_window_loop(window, [&](const Coordinates & id)
+    execute_window_loop(window, [&](const Coordinates &)
     {
         const uint8x16_t data = vld1q_u8(input.ptr());
 
@@ -128,3 +125,4 @@ void NEThresholdKernel::run(const Window &window, const ThreadInfo &info)
 
     (this->*_func)(window);
 }
+} // namespace arm_compute

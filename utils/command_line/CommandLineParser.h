@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -225,8 +225,17 @@ inline void CommandLineParser::print_help(const std::string &program_name) const
 
     for(const auto &option : _positional_options)
     {
-        //FIXME: Print help string as well
-        std::cout << option->name() << "\n";
+        std::string help_to_print;
+
+        // Extract help sub-string
+        const std::string help_str = option->help();
+        const size_t      help_pos = help_str.find(" - ");
+        if(help_pos != std::string::npos)
+        {
+            help_to_print = help_str.substr(help_pos);
+        }
+
+        std::cout << option->name() << help_to_print << "\n";
     }
 }
 } // namespace utils

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@
 #define __ARM_COMPUTE_CLCONVOLUTIONLAYER_H__
 
 #include "arm_compute/runtime/CL/functions/CLDirectConvolutionLayer.h"
+#include "arm_compute/runtime/CL/functions/CLFFTConvolutionLayer.h"
 #include "arm_compute/runtime/CL/functions/CLGEMMConvolutionLayer.h"
 #include "arm_compute/runtime/CL/functions/CLWinogradConvolutionLayer.h"
 #include "arm_compute/runtime/IFunction.h"
@@ -39,6 +40,33 @@ namespace arm_compute
  * -# @ref CLGEMMConvolutionLayer
  * -# @ref CLWinogradConvolutionLayer
  * -# @ref CLDirectConvolutionLayer
+ * -# @ref CLFFTConvolutionLayer
+ *
+ * The function selects one of the algorithms mentioned above based on:
+ *      - The size of the kernel
+ *      - Number of input/output feature maps
+ *      - Amount of memory needed
+ *
+ * Generally GEMM-based convolution is executed when neither Winograd nor FFT nor Direct convolution can be performed.
+ *
+ * FP32 Algorithm| Filter Size                                                 |   Input/Output feature maps               |
+ * --------------|-------------------------------------------------------------|-------------------------------------------|
+ * Winograd      | 3x3 1x3 3x1 5x1 1x5 5x5(fast maths) 7x1 1x7                 |  Input channels is greater than 3         |
+ * FFT           | Squared kernels and greater than 9x9                        |  Input feature maps > Output feature maps |
+ * DirectConv    | 9x9                                                         |                                           |
+ * GEMM          | Any size                                                    |                                           |
+ *
+ * Winograd 5x5 requires fast maths enabled.
+ *
+ * FP16 Algorithm| Filter Size                |   Input/Output feature maps               |
+ * --------------|----------------------------|-------------------------------------------|
+ * Winograd      | 3x3 1x3 3x1 5x1 1x5 5x5    |  Input channels is greater than 3         |
+ * FFT           | Not supported              |                                           |
+ * DirectConv    | 9x9                        |                                           |
+ * GEMM          | Any size                   |                                           |
+ *
+ * Winograd FP16 requires fast maths enabled.
+ *
  */
 class CLConvolutionLayer : public IFunction
 {

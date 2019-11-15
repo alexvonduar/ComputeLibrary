@@ -8,13 +8,16 @@ var searchData=
   ['iarrayaccessor',['IArrayAccessor',['../classarm__compute_1_1test_1_1_i_array_accessor.xhtml',1,'arm_compute::test']]],
   ['ibuffermanager',['IBufferManager',['../classarm__compute_1_1_i_buffer_manager.xhtml',1,'arm_compute']]],
   ['iclarray',['ICLArray',['../classarm__compute_1_1_i_c_l_array.xhtml',1,'arm_compute']]],
+  ['iclarray_3c_20cl_5ffloat_20_3e',['ICLArray&lt; cl_float &gt;',['../classarm__compute_1_1_i_c_l_array.xhtml',1,'arm_compute']]],
+  ['iclarray_3c_20cl_5fint_20_3e',['ICLArray&lt; cl_int &gt;',['../classarm__compute_1_1_i_c_l_array.xhtml',1,'arm_compute']]],
   ['icldepthwiseconvolutionlayer3x3kernel',['ICLDepthwiseConvolutionLayer3x3Kernel',['../classarm__compute_1_1_i_c_l_depthwise_convolution_layer3x3_kernel.xhtml',1,'arm_compute']]],
   ['icldistribution1d',['ICLDistribution1D',['../classarm__compute_1_1_i_c_l_distribution1_d.xhtml',1,'arm_compute']]],
+  ['iclgemmkernelconfiguration',['ICLGEMMKernelConfiguration',['../classarm__compute_1_1_i_c_l_g_e_m_m_kernel_configuration.xhtml',1,'arm_compute']]],
   ['iclgemmlowpreductionkernel',['ICLGEMMLowpReductionKernel',['../classarm__compute_1_1_i_c_l_g_e_m_m_lowp_reduction_kernel.xhtml',1,'arm_compute']]],
-  ['iclgemmreshapedconfiguration',['ICLGEMMReshapedConfiguration',['../classarm__compute_1_1_i_c_l_g_e_m_m_reshaped_configuration.xhtml',1,'arm_compute']]],
   ['iclhog',['ICLHOG',['../classarm__compute_1_1_i_c_l_h_o_g.xhtml',1,'arm_compute']]],
   ['iclkernel',['ICLKernel',['../classarm__compute_1_1_i_c_l_kernel.xhtml',1,'arm_compute']]],
   ['icllut',['ICLLut',['../classarm__compute_1_1_i_c_l_lut.xhtml',1,'arm_compute']]],
+  ['icllwslist',['ICLLWSList',['../classarm__compute_1_1cl__tuner_1_1_i_c_l_l_w_s_list.xhtml',1,'arm_compute::cl_tuner']]],
   ['iclmemoryregion',['ICLMemoryRegion',['../classarm__compute_1_1_i_c_l_memory_region.xhtml',1,'arm_compute']]],
   ['iclmultihog',['ICLMultiHOG',['../classarm__compute_1_1_i_c_l_multi_h_o_g.xhtml',1,'arm_compute']]],
   ['iclmultiimage',['ICLMultiImage',['../classarm__compute_1_1_i_c_l_multi_image.xhtml',1,'arm_compute']]],
@@ -82,7 +85,7 @@ var searchData=
   ['inputnode',['InputNode',['../classarm__compute_1_1graph_1_1_input_node.xhtml',1,'arm_compute::graph']]],
   ['instrument',['Instrument',['../classarm__compute_1_1test_1_1framework_1_1_instrument.xhtml',1,'arm_compute::test::framework']]],
   ['instrumentsstats',['InstrumentsStats',['../classarm__compute_1_1test_1_1framework_1_1_instruments_stats.xhtml',1,'arm_compute::test::framework']]],
-  ['internalkeypoint',['InternalKeyPoint',['../structarm__compute_1_1_internal_key_point.xhtml',1,'InternalKeyPoint'],['../struct_internal_keypoint.xhtml',1,'InternalKeypoint']]],
+  ['internalkeypoint',['InternalKeypoint',['../struct_internal_keypoint.xhtml',1,'InternalKeypoint'],['../structarm__compute_1_1_internal_key_point.xhtml',1,'InternalKeyPoint']]],
   ['ioformatinfo',['IOFormatInfo',['../structarm__compute_1_1_i_o_format_info.xhtml',1,'arm_compute']]],
   ['ipoolmanager',['IPoolManager',['../classarm__compute_1_1_i_pool_manager.xhtml',1,'arm_compute']]],
   ['ipreprocessor',['IPreprocessor',['../classarm__compute_1_1graph__utils_1_1_i_preprocessor.xhtml',1,'arm_compute::graph_utils']]],
@@ -104,5 +107,5 @@ var searchData=
   ['itensorallocator',['ITensorAllocator',['../classarm__compute_1_1_i_tensor_allocator.xhtml',1,'arm_compute']]],
   ['itensorhandle',['ITensorHandle',['../classarm__compute_1_1graph_1_1_i_tensor_handle.xhtml',1,'arm_compute::graph']]],
   ['itensorinfo',['ITensorInfo',['../classarm__compute_1_1_i_tensor_info.xhtml',1,'arm_compute']]],
-  ['iterator',['iterator',['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_cartesian_product_dataset_1_1iterator.xhtml',1,'CartesianProductDataset&lt; T, U &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_join_dataset_1_1iterator.xhtml',1,'JoinDataset&lt; T, U &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_range_dataset_1_1iterator.xhtml',1,'RangeDataset&lt; T &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_singleton_dataset_1_1iterator.xhtml',1,'SingletonDataset&lt; T &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_zip_dataset_1_1iterator.xhtml',1,'ZipDataset&lt; T, U &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_container_dataset_1_1iterator.xhtml',1,'ContainerDataset&lt; T &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_initializer_list_dataset_1_1iterator.xhtml',1,'InitializerListDataset&lt; T &gt;::iterator'],['../classarm__compute_1_1_iterator.xhtml',1,'Iterator']]]
+  ['iterator',['iterator',['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_cartesian_product_dataset_1_1iterator.xhtml',1,'CartesianProductDataset&lt; T, U &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_container_dataset_1_1iterator.xhtml',1,'ContainerDataset&lt; T &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_join_dataset_1_1iterator.xhtml',1,'JoinDataset&lt; T, U &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_range_dataset_1_1iterator.xhtml',1,'RangeDataset&lt; T &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_singleton_dataset_1_1iterator.xhtml',1,'SingletonDataset&lt; T &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_initializer_list_dataset_1_1iterator.xhtml',1,'InitializerListDataset&lt; T &gt;::iterator'],['../structarm__compute_1_1test_1_1framework_1_1dataset_1_1_zip_dataset_1_1iterator.xhtml',1,'ZipDataset&lt; T, U &gt;::iterator'],['../classarm__compute_1_1_iterator.xhtml',1,'Iterator']]]
 ];

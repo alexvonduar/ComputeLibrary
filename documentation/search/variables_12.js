@@ -1,6 +1,7 @@
 var searchData=
 [
   ['r_5fvalue',['r_value',['../_mali_counter_8cpp.xhtml#a736088bbd41fd7407ac9fc811864db68',1,'MaliCounter.cpp']]],
+  ['radix',['radix',['../structarm__compute_1_1_f_f_t_radix_stage_kernel_info.xhtml#a4cab2bef555152e8653f38257e9fcb5e',1,'arm_compute::FFTRadixStageKernelInfo']]],
   ['raw_5f',['raw_',['../structarm__compute_1_1logging_1_1_log_msg.xhtml#ab564cdace3a0a660c5a04b5f2c637213',1,'arm_compute::logging::LogMsg']]],
   ['real_5fclenqueuendrangekernel',['real_clEnqueueNDRangeKernel',['../classarm__compute_1_1_c_l_tuner.xhtml#a5baba955626e8da33ed5dd829a538974',1,'arm_compute::CLTuner']]],
   ['red_5fcoef_5fbt709',['red_coef_bt709',['../namespacearm__compute_1_1test_1_1colorconvert__helper_1_1detail.xhtml#ac3138daaa2a074986406b22ec6f3d909',1,'arm_compute::test::colorconvert_helper::detail']]],
@@ -10,6 +11,8 @@ var searchData=
   ['ref_5fsrc2',['ref_src2',['../namespacearm__compute_1_1test_1_1validation.xhtml#a32648f11269b827fefc288e4d60a3507',1,'arm_compute::test::validation']]],
   ['ref_5fx',['ref_x',['../namespacearm__compute_1_1test_1_1validation.xhtml#afd61a7e2a0a6de7b9572fcf0a81d0999',1,'arm_compute::test::validation']]],
   ['ref_5fy',['ref_y',['../namespacearm__compute_1_1test_1_1validation.xhtml#aefbfb6e2d75275f293020ddfa0a6a2c2',1,'arm_compute::test::validation']]],
+  ['reinterpret_5finput_5fas_5f3d',['reinterpret_input_as_3d',['../structarm__compute_1_1_g_e_m_m_kernel_info.xhtml#aba258627772f6f76f644911b027cbab5',1,'arm_compute::GEMMKernelInfo']]],
+  ['report_5fmutex',['report_mutex',['../namespacearm__gemm.xhtml#a08423b5e87249f9855c82d61e80a6aba',1,'arm_gemm']]],
   ['retain_5finternal_5fweights',['retain_internal_weights',['../structarm__compute_1_1_fully_connected_layer_info.xhtml#a4f87c5060cca01305f94a9d2f10e9d83',1,'arm_compute::FullyConnectedLayerInfo']]],
   ['rgb',['rgb',['../classarm__compute_1_1_pixel_value.xhtml#afe42472c55e7e5df52b8aaca94d0fa7e',1,'arm_compute::PixelValue']]],
   ['rgb2u8_5fblue_5fcoef',['rgb2u8_blue_coef',['../namespacearm__compute_1_1test_1_1colorconvert__helper_1_1detail.xhtml#a212c4b6cc3384fc8a6daefc25b40efb1',1,'arm_compute::test::colorconvert_helper::detail']]],

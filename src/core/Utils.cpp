@@ -158,7 +158,10 @@ const std::string &arm_compute::string_from_data_type(DataType dt)
         { DataType::F32, "F32" },
         { DataType::F64, "F64" },
         { DataType::SIZET, "SIZET" },
+        { DataType::QSYMM8, "QSYMM8" },
+        { DataType::QSYMM8_PER_CHANNEL, "QSYMM8_PER_CHANNEL" },
         { DataType::QASYMM8, "QASYMM8" },
+        { DataType::QSYMM16, "QSYMM16" },
     };
 
     return dt_map[dt];
@@ -179,6 +182,7 @@ const std::string &arm_compute::string_from_activation_func(ActivationLayerInfo:
         { ActivationLayerInfo::ActivationFunction::SQRT, "SQRT" },
         { ActivationLayerInfo::ActivationFunction::SQUARE, "SQUARE" },
         { ActivationLayerInfo::ActivationFunction::TANH, "TANH" },
+        { ActivationLayerInfo::ActivationFunction::IDENTITY, "IDENTITY" },
     };
 
     return act_map[act];
@@ -293,6 +297,7 @@ std::string arm_compute::string_from_pixel_value(const PixelValue &value, const 
             converted_string = ss.str();
             break;
         case DataType::S16:
+        case DataType::QSYMM16:
             ss << value.get<int16_t>();
             converted_string = ss.str();
             break;
@@ -326,24 +331,47 @@ std::string arm_compute::lower_string(const std::string &val)
     return res;
 }
 
-PadStrideInfo arm_compute::calculate_same_pad(TensorShape input_shape, TensorShape weights_shape, PadStrideInfo conv_info, DataLayout data_layout)
+PadStrideInfo arm_compute::calculate_same_pad(TensorShape input_shape, TensorShape weights_shape, PadStrideInfo conv_info, DataLayout data_layout, const Size2D &dilation,
+                                              const DimensionRoundingType &rounding_type)
 {
-    const unsigned int width_idx       = arm_compute::get_data_layout_dimension_index(data_layout, DataLayoutDimension::WIDTH);
-    const unsigned int height_idx      = arm_compute::get_data_layout_dimension_index(data_layout, DataLayoutDimension::HEIGHT);
-    const auto        &strides         = conv_info.stride();
-    const int          out_width       = std::ceil(float(input_shape[width_idx]) / float(strides.first));
-    const int          out_height      = std::ceil(float(input_shape[height_idx]) / float(strides.second));
-    const int          pad_width       = ((out_width - 1) * strides.first + weights_shape[width_idx] - input_shape[width_idx]);
-    const int          pad_height      = ((out_height - 1) * strides.second + weights_shape[height_idx] - input_shape[height_idx]);
-    const int          same_pad_left   = pad_width / 2;
-    const int          same_pad_top    = pad_height / 2;
-    const int          same_pad_right  = pad_width - same_pad_left;
-    const int          same_pad_bottom = pad_height - same_pad_top;
+    const unsigned int width_idx     = arm_compute::get_data_layout_dimension_index(data_layout, DataLayoutDimension::WIDTH);
+    const unsigned int height_idx    = arm_compute::get_data_layout_dimension_index(data_layout, DataLayoutDimension::HEIGHT);
+    const unsigned int in_width      = input_shape[width_idx];
+    const unsigned int in_height     = input_shape[height_idx];
+    const unsigned int kernel_width  = weights_shape[width_idx];
+    const unsigned int kernel_height = weights_shape[height_idx];
+    const auto        &strides       = conv_info.stride();
 
-    return PadStrideInfo(strides.first, strides.second, same_pad_left, same_pad_right, same_pad_top, same_pad_bottom, DimensionRoundingType::CEIL);
+    // Calculate output dimensions
+    const auto         is_ceil    = static_cast<unsigned int>(rounding_type == DimensionRoundingType::CEIL);
+    const unsigned int out_width  = ((in_width - is_ceil) + strides.first - 1) / strides.first + is_ceil;
+    const unsigned int out_height = ((in_height - is_ceil) + strides.second - 1) / strides.second + is_ceil;
+
+    // Calculate effective weights sizes
+    const int real_weight_width  = (kernel_width - 1) * dilation.x() + 1;
+    const int real_weight_height = (kernel_height - 1) * dilation.y() + 1;
+
+    // Calculate total pad
+    const int pad_width  = std::max(0, static_cast<int>((out_width - 1) * strides.first + real_weight_width - in_width));
+    const int pad_height = std::max(0, static_cast<int>((out_height - 1) * strides.second + real_weight_height - in_height));
+
+    // Calculate individual paddings
+    const unsigned int pad_left   = pad_width / 2;
+    const unsigned int pad_top    = pad_height / 2;
+    const unsigned int pad_right  = pad_width - pad_left;
+    const unsigned int pad_bottom = pad_height - pad_top;
+
+    PadStrideInfo same_info(strides.first, strides.second, pad_left, pad_right, pad_top, pad_bottom, rounding_type);
+
+    // Check for correctness of predicted output shape against the one calculated using the generated info
+    const auto out_dims = scaled_dimensions(in_width, in_height, kernel_width, kernel_height, same_info, dilation);
+    ARM_COMPUTE_ERROR_ON(out_dims.first != out_width || out_dims.second != out_height);
+    ARM_COMPUTE_UNUSED(out_dims);
+
+    return same_info;
 }
 
-const std::pair<unsigned int, unsigned int> arm_compute::deconvolution_output_dimensions(
+std::pair<unsigned int, unsigned int> arm_compute::deconvolution_output_dimensions(
     unsigned int in_width, unsigned int in_height, unsigned int kernel_width, unsigned int kernel_height, unsigned int padx, unsigned int pady,
     unsigned int stride_x, unsigned int stride_y)
 {
@@ -356,10 +384,10 @@ const std::pair<unsigned int, unsigned int> arm_compute::deconvolution_output_di
     return std::make_pair<unsigned int, unsigned int>(w, h);
 }
 
-const std::pair<unsigned int, unsigned int> arm_compute::scaled_dimensions(unsigned int width, unsigned int height,
-                                                                           unsigned int kernel_width, unsigned int kernel_height,
-                                                                           const PadStrideInfo &pad_stride_info,
-                                                                           const Size2D        &dilation)
+std::pair<unsigned int, unsigned int> arm_compute::scaled_dimensions(unsigned int width, unsigned int height,
+                                                                     unsigned int kernel_width, unsigned int kernel_height,
+                                                                     const PadStrideInfo &pad_stride_info,
+                                                                     const Size2D        &dilation)
 {
     const unsigned int pad_left   = pad_stride_info.pad_left();
     const unsigned int pad_top    = pad_stride_info.pad_top();
@@ -383,18 +411,6 @@ const std::pair<unsigned int, unsigned int> arm_compute::scaled_dimensions(unsig
             ARM_COMPUTE_ERROR("Unsupported rounding type");
     }
 
-    // Make sure that border operations will start from inside the input and not the padded area
-    if(((w - 1) * stride_x) >= (width + pad_left))
-    {
-        --w;
-    }
-    if(((h - 1) * stride_y) >= (height + pad_top))
-    {
-        --h;
-    }
-    ARM_COMPUTE_ERROR_ON(((w - 1) * stride_x) >= (width + pad_left));
-    ARM_COMPUTE_ERROR_ON(((h - 1) * stride_y) >= (height + pad_top));
-
     return std::make_pair(w, h);
 }
 
@@ -414,6 +430,7 @@ void arm_compute::print_consecutive_elements(std::ostream &s, DataType dt, const
             print_consecutive_elements_impl<uint16_t>(s, reinterpret_cast<const uint16_t *>(ptr), n, stream_width, element_delim);
             break;
         case DataType::S16:
+        case DataType::QSYMM16:
             print_consecutive_elements_impl<int16_t>(s, reinterpret_cast<const int16_t *>(ptr), n, stream_width, element_delim);
             break;
         case DataType::U32:
@@ -445,6 +462,7 @@ int arm_compute::max_consecutive_elements_display_width(std::ostream &s, DataTyp
         case DataType::U16:
             return max_consecutive_elements_display_width_impl<uint16_t>(s, reinterpret_cast<const uint16_t *>(ptr), n);
         case DataType::S16:
+        case DataType::QSYMM16:
             return max_consecutive_elements_display_width_impl<int16_t>(s, reinterpret_cast<const int16_t *>(ptr), n);
         case DataType::U32:
             return max_consecutive_elements_display_width_impl<uint32_t>(s, reinterpret_cast<const uint32_t *>(ptr), n);

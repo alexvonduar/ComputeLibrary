@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 ARM Limited.
+ * Copyright (c) 2016-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,17 +68,13 @@ void NEGaussianPyramidHalf::configure(const ITensor *input, IPyramid *pyramid, B
 
     /* Get number of pyramid levels */
     const size_t num_levels = pyramid->info()->num_levels();
+    const size_t num_stages = num_levels - 1;
 
     _input   = input;
     _pyramid = pyramid;
 
     if(num_levels > 1)
     {
-        _horizontal_border_handler = arm_compute::support::cpp14::make_unique<NEFillBorderKernel[]>(num_levels - 1);
-        _vertical_border_handler   = arm_compute::support::cpp14::make_unique<NEFillBorderKernel[]>(num_levels - 1);
-        _horizontal_reduction      = arm_compute::support::cpp14::make_unique<NEGaussianPyramidHorKernel[]>(num_levels - 1);
-        _vertical_reduction        = arm_compute::support::cpp14::make_unique<NEGaussianPyramidVertKernel[]>(num_levels - 1);
-
         // Apply half scale to the X dimension of the tensor shape
         TensorShape tensor_shape = pyramid->info()->tensor_shape();
         tensor_shape.set(0, (pyramid->info()->width() + 1) * SCALE_PYRAMID_HALF);
@@ -86,7 +82,17 @@ void NEGaussianPyramidHalf::configure(const ITensor *input, IPyramid *pyramid, B
         PyramidInfo pyramid_info(num_levels - 1, SCALE_PYRAMID_HALF, tensor_shape, Format::S16);
         _tmp.init(pyramid_info);
 
-        for(unsigned int i = 0; i < num_levels - 1; ++i)
+        _horizontal_reduction.clear();
+        _vertical_reduction.clear();
+        _horizontal_border_handler.clear();
+        _vertical_border_handler.clear();
+
+        _horizontal_reduction.resize(num_stages);
+        _vertical_reduction.resize(num_stages);
+        _horizontal_border_handler.resize(num_stages);
+        _vertical_border_handler.resize(num_stages);
+
+        for(size_t i = 0; i < num_stages; ++i)
         {
             /* Configure horizontal kernel */
             _horizontal_reduction[i].configure(_pyramid->get_pyramid_level(i), _tmp.get_pyramid_level(i));
@@ -110,17 +116,17 @@ void NEGaussianPyramidHalf::run()
     ARM_COMPUTE_ERROR_ON_MSG(_pyramid == nullptr, "Unconfigured function");
 
     /* Get number of pyramid levels */
-    const size_t num_levels = _pyramid->info()->num_levels();
+    const unsigned int num_levels = _pyramid->info()->num_levels();
 
     /* The first level of the pyramid has the input image */
     _pyramid->get_pyramid_level(0)->copy_from(*_input);
 
     for(unsigned int i = 0; i < num_levels - 1; ++i)
     {
-        NEScheduler::get().schedule(_horizontal_border_handler.get() + i, Window::DimZ);
-        NEScheduler::get().schedule(_horizontal_reduction.get() + i, Window::DimY);
-        NEScheduler::get().schedule(_vertical_border_handler.get() + i, Window::DimZ);
-        NEScheduler::get().schedule(_vertical_reduction.get() + i, Window::DimY);
+        NEScheduler::get().schedule(&_horizontal_border_handler[i], Window::DimZ);
+        NEScheduler::get().schedule(&_horizontal_reduction[i], Window::DimY);
+        NEScheduler::get().schedule(&_vertical_border_handler[i], Window::DimZ);
+        NEScheduler::get().schedule(&_vertical_reduction[i], Window::DimY);
     }
 }
 
@@ -141,19 +147,23 @@ void NEGaussianPyramidOrb::configure(const ITensor *input, IPyramid *pyramid, Bo
 
     /* Get number of pyramid levels */
     const size_t num_levels = pyramid->info()->num_levels();
+    const size_t num_stages = num_levels - 1;
 
     _input   = input;
     _pyramid = pyramid;
 
+    _gaus5x5.clear();
+    _scale_nearest.clear();
+
+    _gaus5x5.resize(num_stages);
+    _scale_nearest.resize(num_stages);
+
     if(num_levels > 1)
     {
-        _gaus5x5       = arm_compute::support::cpp14::make_unique<NEGaussian5x5[]>(num_levels - 1);
-        _scale_nearest = arm_compute::support::cpp14::make_unique<NEScale[]>(num_levels - 1);
-
         PyramidInfo pyramid_info(num_levels - 1, SCALE_PYRAMID_ORB, pyramid->info()->tensor_shape(), Format::U8);
         _tmp.init(pyramid_info);
 
-        for(unsigned int i = 0; i < num_levels - 1; ++i)
+        for(size_t i = 0; i < num_levels - 1; ++i)
         {
             /* Configure gaussian 5x5 */
             _gaus5x5[i].configure(_pyramid->get_pyramid_level(i), _tmp.get_pyramid_level(i), border_mode, constant_border_value);

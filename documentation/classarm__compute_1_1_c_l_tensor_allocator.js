@@ -7,10 +7,11 @@ var classarm__compute_1_1_c_l_tensor_allocator =
     [ "cl_data", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#ac7e247b94ceae35db2a172961ab83df9", null ],
     [ "data", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#a99c07c946023f413991a249db8b99ab0", null ],
     [ "free", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#a1468b0adb6ec3f9d38aa7d60b8a91974", null ],
-    [ "import_memory", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#ae0234baf6196c7895e126ba7c79ccf25", null ],
+    [ "import_memory", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#aee45c9a6939cadf66a6e7d998c6f59df", null ],
     [ "map", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#a15eaecea13a8a49c8d259fddefcbd7ac", null ],
     [ "operator=", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#a74c9c61e0615334fdeb176f21828a98f", null ],
     [ "operator=", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#aba115eb9c458f9e99b8c3fa3975a74a3", null ],
+    [ "quantization", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#a5c27e81a1ad958e4de947c1da77f4cf1", null ],
     [ "set_associated_memory_group", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#ae1746928cddc235a148f11132f0fa8f2", null ],
     [ "unmap", "classarm__compute_1_1_c_l_tensor_allocator.xhtml#a34b854d640d247bd7422f60ca2f3a05c", null ]
 ];

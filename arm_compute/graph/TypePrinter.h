@@ -86,6 +86,9 @@ inline ::std::ostream &operator<<(::std::ostream &os, const NodeType &node_type)
         case NodeType::DetectionOutputLayer:
             os << "DetectionOutputLayer";
             break;
+        case NodeType::DetectionPostProcessLayer:
+            os << "DetectionPostProcessLayer";
+            break;
         case NodeType::DepthwiseConvolutionLayer:
             os << "DepthwiseConvolutionLayer";
             break;
@@ -97,6 +100,12 @@ inline ::std::ostream &operator<<(::std::ostream &os, const NodeType &node_type)
             break;
         case NodeType::FullyConnectedLayer:
             os << "FullyConnectedLayer";
+            break;
+        case NodeType::FusedConvolutionBatchNormalizationLayer:
+            os << "FusedConvolutionBatchNormalizationLayer";
+            break;
+        case NodeType::FusedDepthwiseConvolutionBatchNormalizationLayer:
+            os << "FusedDepthwiseConvolutionBatchNormalizationLayer";
             break;
         case NodeType::GenerateProposalsLayer:
             os << "GenerateProposalsLayer";
@@ -119,6 +128,9 @@ inline ::std::ostream &operator<<(::std::ostream &os, const NodeType &node_type)
         case NodeType::PriorBoxLayer:
             os << "PriorBoxLayer";
             break;
+        case NodeType::QuantizationLayer:
+            os << "QuantizationLayer";
+            break;
         case NodeType::ReorgLayer:
             os << "ReorgLayer";
             break;
@@ -139,6 +151,9 @@ inline ::std::ostream &operator<<(::std::ostream &os, const NodeType &node_type)
             break;
         case NodeType::SplitLayer:
             os << "SplitLayer";
+            break;
+        case NodeType::StackLayer:
+            os << "StackLayer";
             break;
         case NodeType::UpsampleLayer:
             os << "UpsampleLayer";

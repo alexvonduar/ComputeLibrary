@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 ARM Limited.
+ * Copyright (c) 2018-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,6 @@ Status validate_arguments(const ITensorInfo *mm_result, const ITensorInfo *vecto
 {
     ARM_COMPUTE_RETURN_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(mm_result, 1, DataType::S32);
     ARM_COMPUTE_RETURN_ERROR_ON(output_stage.type == GEMMLowpOutputStageType::NONE);
-    ARM_COMPUTE_RETURN_ERROR_ON(bias == nullptr && a_offset == 0 && b_offset == 0);
     ARM_COMPUTE_RETURN_ERROR_ON(output_stage.gemmlowp_max_bound > 255);
     ARM_COMPUTE_RETURN_ERROR_ON(output_stage.gemmlowp_min_bound < 0 || output_stage.gemmlowp_min_bound > output_stage.gemmlowp_max_bound);
 
@@ -282,18 +281,9 @@ void CLGEMMLowpOffsetContributionOutputStageKernel::run(const Window &window, cl
     {
         unsigned int idx = 0;
         add_3D_tensor_argument(idx, _mm_result, slice);
-        if(_vector_sum_col != nullptr)
-        {
-            add_2D_tensor_argument(idx, _vector_sum_col, win_vector_sum_col);
-        }
-        if(_vector_sum_row != nullptr)
-        {
-            add_2D_tensor_argument(idx, _vector_sum_row, win_vector_sum_row);
-        }
-        if(_bias != nullptr)
-        {
-            add_1D_tensor_argument(idx, _bias, biases_slice);
-        }
+        add_2D_tensor_argument_if((_vector_sum_col != nullptr), idx, _vector_sum_col, win_vector_sum_col);
+        add_2D_tensor_argument_if((_vector_sum_row != nullptr), idx, _vector_sum_row, win_vector_sum_row);
+        add_1D_tensor_argument_if((_bias != nullptr), idx, _bias, biases_slice);
         add_3D_tensor_argument(idx, _output, slice);
         enqueue(queue, *this, slice, lws_hint());
     }

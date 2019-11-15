@@ -66,7 +66,8 @@ Status NEReductionOperation::validate(const ITensorInfo *input, const ITensorInf
 
 void NEReductionOperation::configure(ITensor *input, ITensor *output, unsigned int axis, ReductionOperation op)
 {
-    ARM_COMPUTE_ERROR_ON_DATA_TYPE_CHANNEL_NOT_IN(input, 1, DataType::QASYMM8, DataType::F16, DataType::F32);
+    ARM_COMPUTE_ERROR_ON_NULLPTR(input, output);
+    ARM_COMPUTE_ERROR_THROW_ON(NEReductionOperation::validate(input->info(), output->info(), axis, op));
 
     // Configure reduction kernel
     _reduction_kernel.configure(input, output, axis, op);
@@ -77,7 +78,78 @@ void NEReductionOperation::configure(ITensor *input, ITensor *output, unsigned i
     {
         // Configure fill border kernel
         const BorderSize fill_border_size = _reduction_kernel.border_size();
-        const PixelValue pixelValue       = (op == ReductionOperation::PROD) ? PixelValue(1, input->info()->data_type(), input->info()->quantization_info()) : PixelValue(0, input->info()->data_type());
+        PixelValue       pixelValue;
+        switch(op)
+        {
+            case ReductionOperation::PROD:
+            {
+                pixelValue = PixelValue(1, input->info()->data_type(), input->info()->quantization_info());
+                break;
+            }
+            case ReductionOperation::MIN:
+            {
+                switch(input->info()->data_type())
+                {
+                    case DataType::F32:
+                    {
+                        pixelValue = PixelValue(std::numeric_limits<float>::max());
+                        break;
+                    }
+                    case DataType::F16:
+                    {
+                        pixelValue = PixelValue(static_cast<half>(65504.0f));
+                        break;
+                    }
+                    case DataType::QASYMM8:
+                    {
+                        pixelValue = PixelValue(255, input->info()->data_type(), input->info()->quantization_info());
+                        break;
+                    }
+                    default:
+                    {
+                        ARM_COMPUTE_ERROR("Unsupported DataType");
+                    }
+                }
+                break;
+            }
+            case ReductionOperation::MAX:
+            {
+                switch(input->info()->data_type())
+                {
+                    case DataType::F32:
+                    {
+                        pixelValue = PixelValue(-std::numeric_limits<float>::max());
+                        break;
+                    }
+                    case DataType::F16:
+                    {
+                        pixelValue = PixelValue(static_cast<half>(-65504.0f));
+                        break;
+                    }
+                    case DataType::QASYMM8:
+                    {
+                        pixelValue = PixelValue(0, input->info()->data_type(), input->info()->quantization_info());
+                        break;
+                    }
+                    default:
+                    {
+                        ARM_COMPUTE_ERROR("Unsupported DataType");
+                    }
+                }
+                break;
+            }
+            case ReductionOperation::ARG_IDX_MAX:
+            case ReductionOperation::ARG_IDX_MIN:
+            case ReductionOperation::MEAN_SUM:
+            case ReductionOperation::SUM_SQUARE:
+            case ReductionOperation::SUM:
+            {
+                pixelValue = PixelValue(0, input->info()->data_type());
+                break;
+            }
+            default:
+                ARM_COMPUTE_ERROR("Reduction Operation unsupported");
+        }
         _fill_border_kernel.configure(input, fill_border_size, BorderMode::CONSTANT, pixelValue);
     }
 }

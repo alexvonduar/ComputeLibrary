@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 ARM Limited.
+ * Copyright (c) 2018-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,6 +74,22 @@ void DotGraphVisitor::visit(EltwiseLayerNode &n)
 {
     std::stringstream ss;
     ss << n.eltwise_operation();
+    _info = ss.str();
+}
+
+void DotGraphVisitor::visit(FusedConvolutionBatchNormalizationNode &n)
+{
+    ARM_COMPUTE_UNUSED(n);
+    std::stringstream ss;
+    ss << "FusedConvolutionBatchNormalizationNode";
+    _info = ss.str();
+}
+
+void DotGraphVisitor::visit(FusedDepthwiseConvolutionBatchNormalizationNode &n)
+{
+    ARM_COMPUTE_UNUSED(n);
+    std::stringstream ss;
+    ss << "FusedDepthwiseConvolutionBatchNormalizationNode";
     _info = ss.str();
 }
 

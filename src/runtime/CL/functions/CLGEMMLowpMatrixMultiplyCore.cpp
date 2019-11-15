@@ -24,6 +24,8 @@
 #include "arm_compute/runtime/CL/functions/CLGEMMLowpMatrixMultiplyCore.h"
 
 #include "arm_compute/core/CL/ICLTensor.h"
+#include "arm_compute/core/CL/gemm/native/CLGEMMNativeKernelConfiguration.h"
+#include "arm_compute/core/CL/gemm/reshaped_only_rhs/CLGEMMReshapedOnlyRHSKernelConfiguration.h"
 #include "arm_compute/core/Error.h"
 #include "arm_compute/core/Helpers.h"
 #include "arm_compute/core/TensorInfo.h"
@@ -31,7 +33,6 @@
 #include "arm_compute/core/Validate.h"
 #include "arm_compute/core/utils/misc/ShapeCalculator.h"
 #include "arm_compute/runtime/CL/CLScheduler.h"
-#include "arm_compute/runtime/CL/gemm_reshaped/CLGEMMReshapedConfiguration.h"
 
 namespace arm_compute
 {
@@ -40,17 +41,17 @@ using namespace arm_compute::cl_gemm;
 
 namespace
 {
-inline bool is_gemm_reshaped(unsigned int m, bool reshape_b_only_on_first_run, GPUTarget gpu_target)
+inline bool is_gemm_reshaped(bool reshape_b_only_on_first_run, GPUTarget gpu_target)
 {
-    return (get_arch_from_target(gpu_target) != GPUTarget::MIDGARD) && (m > 1) && (reshape_b_only_on_first_run);
+    return (get_arch_from_target(gpu_target) != GPUTarget::MIDGARD) && (reshape_b_only_on_first_run);
 }
 } // namespace
 
 CLGEMMLowpMatrixMultiplyCore::CLGEMMLowpMatrixMultiplyCore(std::shared_ptr<IMemoryManager> memory_manager)
     : _memory_group(std::move(memory_manager)),
-      _mm_kernel(),
-      _mm_reshaped_kernel(),
-      _mtx_a_reshape_kernel(),
+      _mm_midgard_kernel(),
+      _mm_native_kernel(),
+      _mm_reshaped_only_rhs_kernel(),
       _mtx_b_reshape_kernel(),
       _mtx_a_reduction_kernel(),
       _mtx_b_reduction_kernel(),
@@ -58,13 +59,13 @@ CLGEMMLowpMatrixMultiplyCore::CLGEMMLowpMatrixMultiplyCore(std::shared_ptr<IMemo
       _offset_contribution_output_stage_kernel(),
       _vector_sum_col(),
       _vector_sum_row(),
-      _tmp_a(),
       _tmp_b(),
       _mm_result_s32(),
       _original_b(nullptr),
       _a_offset(0),
       _b_offset(0),
       _is_gemm_reshaped(true),
+      _is_midgard(false),
       _reshape_b_only_on_first_run(false),
       _is_prepared(false),
       _fuse_output_stage(false)
@@ -79,15 +80,16 @@ void CLGEMMLowpMatrixMultiplyCore::configure(const ICLTensor *a, const ICLTensor
     _is_prepared                 = false;
     _original_b                  = b;
     _reshape_b_only_on_first_run = gemm_info.reshape_b_only_on_first_run();
-    _a_offset                    = a->info()->quantization_info().offset;
-    _b_offset                    = b->info()->quantization_info().offset;
+    _a_offset                    = a->info()->quantization_info().uniform().offset;
+    _b_offset                    = b->info()->quantization_info().uniform().offset;
 
     // Get the GPU target
     const GPUTarget gpu_target = CLScheduler::get().target();
 
     // Set the target for the kernels
-    _mtx_a_reshape_kernel.set_target(gpu_target);
-    _mm_kernel.set_target(gpu_target);
+    _mm_midgard_kernel.set_target(gpu_target);
+    _mm_native_kernel.set_target(gpu_target);
+    _mm_reshaped_only_rhs_kernel.set_target(gpu_target);
 
     const ICLTensor *matrix_a = a;
     const ICLTensor *matrix_b = b;
@@ -105,29 +107,22 @@ void CLGEMMLowpMatrixMultiplyCore::configure(const ICLTensor *a, const ICLTensor
     const int          depth_output_gemm3d     = gemm_info.depth_output_gemm3d();
 
     // Check if we need to reshape the matrix A and matrix B
-    _is_gemm_reshaped = is_gemm_reshaped(m, _reshape_b_only_on_first_run, gpu_target);
+    _is_gemm_reshaped = is_gemm_reshaped(_reshape_b_only_on_first_run, gpu_target);
+    _is_midgard       = gpu_target == GPUTarget::MIDGARD;
 
     if(_is_gemm_reshaped)
     {
-        // if _is_interleaved_transposed is set, force reinterpret_input_as_3d to be false as the output of CLGEMMInterleaveKernel will be 2D
-        reinterpret_input_as_3d = false;
-
-        matrix_a = &_tmp_a;
         matrix_b = &_tmp_b;
 
-        _memory_group.manage(&_tmp_a);
         if(!_reshape_b_only_on_first_run)
         {
             _memory_group.manage(&_tmp_b);
         }
 
         // Pick up the GEMM configuration
-        std::tie(lhs_info, rhs_info) = CLGEMMReshapedConfigurationFactory::create()->configure(m, n, k, batch_size, DataType::QASYMM8);
+        std::tie(lhs_info, rhs_info) = CLGEMMReshapedOnlyRHSKernelConfigurationFactory::create(gpu_target)->configure(m, n, k, batch_size, DataType::QASYMM8);
 
-        // Configure interleave kernel
-        _mtx_a_reshape_kernel.configure(a, &_tmp_a, lhs_info, gemm_info.reinterpret_input_as_3d());
-
-        // Configure transpose kernel
+        // Configure reshape RHS kernel
         _mtx_b_reshape_kernel.configure(b, &_tmp_b, rhs_info);
     }
 
@@ -166,12 +161,23 @@ void CLGEMMLowpMatrixMultiplyCore::configure(const ICLTensor *a, const ICLTensor
         if(_is_gemm_reshaped)
         {
             // Configure and tune matrix multiply kernel
-            _mm_reshaped_kernel.configure(matrix_a, matrix_b, &_mm_result_s32, lhs_info, rhs_info, GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d));
+            _mm_reshaped_only_rhs_kernel.configure(matrix_a, matrix_b, &_mm_result_s32, lhs_info, rhs_info, GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d));
         }
         else
         {
-            // Configure matrix multiply kernel
-            _mm_kernel.configure(matrix_a, matrix_b, &_mm_result_s32, false, GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d));
+            if(_is_midgard)
+            {
+                // Configure matrix multiply kernel
+                _mm_midgard_kernel.configure(matrix_a, matrix_b, &_mm_result_s32, GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d));
+            }
+            else
+            {
+                // Pick up the GEMM configuration
+                std::tie(lhs_info, rhs_info) = CLGEMMNativeKernelConfigurationFactory::create(gpu_target)->configure(m, n, k, batch_size, DataType::QASYMM8);
+
+                // Configure matrix multiply kernel
+                _mm_native_kernel.configure(matrix_a, matrix_b, &_mm_result_s32, lhs_info, rhs_info, GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d));
+            }
         }
 
         // Configure offset contribution kernel
@@ -185,12 +191,23 @@ void CLGEMMLowpMatrixMultiplyCore::configure(const ICLTensor *a, const ICLTensor
         if(_is_gemm_reshaped)
         {
             // Configure and tune matrix multiply kernel
-            _mm_reshaped_kernel.configure(matrix_a, matrix_b, output, lhs_info, rhs_info, GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d));
+            _mm_reshaped_only_rhs_kernel.configure(matrix_a, matrix_b, output, lhs_info, rhs_info, GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d));
         }
         else
         {
-            // Configure matrix multiply kernel
-            _mm_kernel.configure(matrix_a, matrix_b, output, false, GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d));
+            if(_is_midgard)
+            {
+                // Configure matrix multiply kernel
+                _mm_midgard_kernel.configure(matrix_a, matrix_b, output, GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d));
+            }
+            else
+            {
+                // Pick up the GEMM configuration
+                std::tie(lhs_info, rhs_info) = CLGEMMNativeKernelConfigurationFactory::create(gpu_target)->configure(m, n, k, batch_size, DataType::QASYMM8);
+
+                // Configure matrix multiply kernel
+                _mm_native_kernel.configure(matrix_a, matrix_b, output, lhs_info, rhs_info, GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d));
+            }
         }
 
         // Configure offset contribution kernel
@@ -200,7 +217,6 @@ void CLGEMMLowpMatrixMultiplyCore::configure(const ICLTensor *a, const ICLTensor
     // Allocate tensors
     if(_is_gemm_reshaped)
     {
-        _tmp_a.allocator()->allocate();
         if(!_reshape_b_only_on_first_run)
         {
             _tmp_b.allocator()->allocate();
@@ -225,16 +241,18 @@ Status CLGEMMLowpMatrixMultiplyCore::validate(const ITensorInfo *a, const ITenso
     ARM_COMPUTE_RETURN_ERROR_ON_MSG(gemm_info.is_a_reshaped(), "Matrix A already reshaped is not supported");
     ARM_COMPUTE_RETURN_ERROR_ON_MSG(gemm_info.is_b_reshaped(), "Matrix B already reshaped is not supported");
 
-    int32_t a_offset = a->quantization_info().offset;
-    int32_t b_offset = b->quantization_info().offset;
+    int32_t a_offset = a->quantization_info().uniform().offset;
+    int32_t b_offset = b->quantization_info().uniform().offset;
 
     const ITensorInfo *matrix_a_info = a;
     const ITensorInfo *matrix_b_info = b;
 
-    TensorInfo        tmp_a_info{};
     TensorInfo        tmp_b_info{};
     GEMMRHSMatrixInfo rhs_info;
     GEMMLHSMatrixInfo lhs_info;
+
+    // Get the GPU target
+    const GPUTarget gpu_target = CLScheduler::get().target();
 
     bool               reinterpret_input_as_3d = gemm_info.reinterpret_input_as_3d();
     const unsigned int m                       = reinterpret_input_as_3d ? (a->dimension(1) * a->dimension(2)) : a->dimension(1);
@@ -242,36 +260,26 @@ Status CLGEMMLowpMatrixMultiplyCore::validate(const ITensorInfo *a, const ITenso
     const unsigned int k                       = a->dimension(0);
     const unsigned int batch_size              = reinterpret_input_as_3d ? a->dimension(3) : a->dimension(2);
     const int          depth_output_gemm3d     = gemm_info.depth_output_gemm3d();
+    const bool         is_midgard              = gpu_target == GPUTarget::MIDGARD;
 
-    bool reshape_matrices = is_gemm_reshaped(m, gemm_info.reshape_b_only_on_first_run(), CLScheduler::get().target());
-
-    // if reshape_matrices is set, force reinterpret_input_as_3d to be false as the output of CLGEMMInterleaveKernel will be 2D
-    if(reshape_matrices)
-    {
-        reinterpret_input_as_3d = false;
-    }
+    bool reshape_matrix_b = is_gemm_reshaped(gemm_info.reshape_b_only_on_first_run(), CLScheduler::get().target());
 
     const GEMMReshapeInfo reshape_info = GEMMReshapeInfo(m, n, k, 1, 1, depth_output_gemm3d, reinterpret_input_as_3d);
 
-    if(reshape_matrices)
+    if(reshape_matrix_b)
     {
-        matrix_a_info = &tmp_a_info;
         matrix_b_info = &tmp_b_info;
 
         // Pick up the GEMM configuration
-        std::tie(lhs_info, rhs_info) = CLGEMMReshapedConfigurationFactory::create()->configure(m, n, k, batch_size, DataType::QASYMM8);
+        std::tie(lhs_info, rhs_info) = CLGEMMReshapedOnlyRHSKernelConfigurationFactory::create(gpu_target)->configure(m, n, k, batch_size, DataType::QASYMM8);
 
-        // Validate interleave kernel
-        auto_init_if_empty(tmp_a_info, a->clone()->set_tensor_shape(compute_lhs_reshaped_shape(*a, lhs_info, gemm_info.reinterpret_input_as_3d())));
-        ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMReshapeLHSMatrixKernel::validate(a, &tmp_a_info, lhs_info, gemm_info.reinterpret_input_as_3d()));
-
-        // Validate transpose kernel
-
+        // Validate reshape RHS kernel
         auto_init_if_empty(tmp_b_info, b->clone()->set_tensor_shape(compute_rhs_reshaped_shape(*b, rhs_info)));
         ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMReshapeRHSMatrixKernel::validate(b, &tmp_b_info, rhs_info));
     }
 
-    TensorInfo info_vector_sum_col, info_vector_sum_row;
+    TensorInfo info_vector_sum_col{};
+    TensorInfo info_vector_sum_row{};
 
     // Validate matrix B reduction kernel only if _a_offset is not equal to 0
     if(a_offset != 0)
@@ -295,22 +303,34 @@ Status CLGEMMLowpMatrixMultiplyCore::validate(const ITensorInfo *a, const ITenso
     {
         TensorInfo mm_result_s32_info{};
 
-        if(reshape_matrices)
+        if(reshape_matrix_b)
         {
             // Output tensor auto inizialitation if not yet initialized
             auto_init_if_empty(mm_result_s32_info, a->clone()->set_tensor_shape(compute_mm_shape(*matrix_a_info, *matrix_b_info, reshape_info)).set_data_type(DataType::S32));
 
             // Validate matrix multiply
-            ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpMatrixMultiplyReshapedKernel::validate(matrix_a_info, matrix_b_info, &mm_result_s32_info, lhs_info, rhs_info, reshape_info));
+            ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpMatrixMultiplyReshapedOnlyRHSKernel::validate(matrix_a_info, matrix_b_info, &mm_result_s32_info, lhs_info, rhs_info, reshape_info));
         }
         else
         {
             // Output tensor auto inizialitation if not yet initialized
             auto_init_if_empty(mm_result_s32_info, a->clone()->set_tensor_shape(compute_mm_shape(*matrix_a_info, *matrix_b_info, false, reshape_info)).set_data_type(DataType::S32));
 
-            // Validate matrix multiply
-            ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpMatrixMultiplyKernel::validate(matrix_a_info, matrix_b_info, &mm_result_s32_info, false, reshape_info));
+            if(is_midgard)
+            {
+                // Validate matrix multiply
+                ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpMatrixMultiplyKernel::validate(matrix_a_info, matrix_b_info, &mm_result_s32_info, reshape_info));
+            }
+            else
+            {
+                // Pick up the GEMM configuration
+                std::tie(lhs_info, rhs_info) = CLGEMMNativeKernelConfigurationFactory::create(gpu_target)->configure(m, n, k, batch_size, DataType::QASYMM8);
+
+                // Validate matrix multiply
+                ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpMatrixMultiplyNativeKernel::validate(matrix_a_info, matrix_b_info, &mm_result_s32_info, lhs_info, rhs_info, reshape_info));
+            }
         }
+
         // Validate offset contribution kernel
         ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpOffsetContributionOutputStageKernel::validate(&mm_result_s32_info,
                                                                                             a_offset == 0 ? nullptr : &info_vector_sum_col,
@@ -322,22 +342,37 @@ Status CLGEMMLowpMatrixMultiplyCore::validate(const ITensorInfo *a, const ITenso
     }
     else
     {
-        if(reshape_matrices)
+        if(reshape_matrix_b)
         {
             // Validate matrix multiply
-            ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpMatrixMultiplyReshapedKernel::validate(matrix_a_info, matrix_b_info, output, lhs_info, rhs_info, reshape_info));
+            ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpMatrixMultiplyReshapedOnlyRHSKernel::validate(matrix_a_info, matrix_b_info, output, lhs_info, rhs_info, reshape_info));
         }
         else
         {
-            // Validate matrix multiply
-            ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpMatrixMultiplyKernel::validate(matrix_a_info, matrix_b_info, output, false, reshape_info));
+            if(is_midgard)
+            {
+                // Validate matrix multiply
+                ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpMatrixMultiplyKernel::validate(matrix_a_info, matrix_b_info, output, reshape_info));
+            }
+            else
+            {
+                // Pick up the GEMM configuration
+                std::tie(lhs_info, rhs_info) = CLGEMMNativeKernelConfigurationFactory::create(gpu_target)->configure(m, n, k, batch_size, DataType::QASYMM8);
+
+                // Validate matrix multiply
+                ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpMatrixMultiplyNativeKernel::validate(matrix_a_info, matrix_b_info, output, lhs_info, rhs_info, reshape_info));
+            }
         }
-        // Validate offset contribution kernel
-        ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpOffsetContributionKernel::validate(output,
-                                                                                 a_offset == 0 ? nullptr : &info_vector_sum_col,
-                                                                                 b_offset == 0 ? nullptr : &info_vector_sum_row,
-                                                                                 c,
-                                                                                 a_offset, b_offset));
+
+        if(output->total_size() != 0)
+        {
+            // Validate offset contribution kernel
+            ARM_COMPUTE_RETURN_ON_ERROR(CLGEMMLowpOffsetContributionKernel::validate(output,
+                                                                                     a_offset == 0 ? nullptr : &info_vector_sum_col,
+                                                                                     b_offset == 0 ? nullptr : &info_vector_sum_row,
+                                                                                     c,
+                                                                                     a_offset, b_offset));
+        }
     }
 
     return Status{};
@@ -347,13 +382,10 @@ void CLGEMMLowpMatrixMultiplyCore::run()
 {
     prepare();
 
-    _memory_group.acquire();
+    MemoryGroupResourceScope scope_mg(_memory_group);
 
     if(_is_gemm_reshaped)
     {
-        // Run reshape matrix A
-        CLScheduler::get().enqueue(_mtx_a_reshape_kernel, false);
-
         if(!_reshape_b_only_on_first_run)
         {
             // Run reshape matrix B
@@ -370,11 +402,18 @@ void CLGEMMLowpMatrixMultiplyCore::run()
     // Run matrix multiply
     if(_is_gemm_reshaped)
     {
-        CLScheduler::get().enqueue(_mm_reshaped_kernel, false);
+        CLScheduler::get().enqueue(_mm_reshaped_only_rhs_kernel, false);
     }
     else
     {
-        CLScheduler::get().enqueue(_mm_kernel, false);
+        if(_is_midgard)
+        {
+            CLScheduler::get().enqueue(_mm_midgard_kernel, false);
+        }
+        else
+        {
+            CLScheduler::get().enqueue(_mm_native_kernel, false);
+        }
     }
 
     // Run matrix A reduction kernel only if _b_offset is not equal to 0
@@ -393,8 +432,6 @@ void CLGEMMLowpMatrixMultiplyCore::run()
         // Run offset contribution kernel
         CLScheduler::get().enqueue(_offset_contribution_kernel, true);
     }
-
-    _memory_group.release();
 }
 
 void CLGEMMLowpMatrixMultiplyCore::prepare()

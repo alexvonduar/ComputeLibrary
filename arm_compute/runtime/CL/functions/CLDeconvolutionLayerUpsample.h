@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 ARM Limited.
+ * Copyright (c) 2017-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@
 #include "arm_compute/runtime/IFunction.h"
 
 #include "arm_compute/core/CL/kernels/CLDeconvolutionLayerUpsampleKernel.h"
+#include "arm_compute/core/CL/kernels/CLMemsetKernel.h"
 #include "arm_compute/core/Types.h"
 #include "arm_compute/runtime/CL/CLMemoryGroup.h"
 #include "arm_compute/runtime/IFunction.h"
@@ -34,9 +35,14 @@
 
 namespace arm_compute
 {
+// Forward declarations
 class ICLTensor;
 
-/** Basic function to run @ref CLDeconvolutionLayerUpsampleKernel */
+/** Basic function to execute deconvolution upsample on OpenCL. This function calls the following OpenCL kernels and functions:
+ *
+ * -# @ref CLMemsetKernel
+ * -# @ref CLDeconvolutionLayerUpsampleKernel
+ */
 class CLDeconvolutionLayerUpsample : public IFunction
 {
 public:
@@ -55,31 +61,28 @@ public:
 
     /** Initialize the function's source, destination, interpolation type and border_mode.
      *
-     * @param[in, out] input        Source tensor. Data type supported: QASYMM8/F16/F32.
-     * @param[out]     output       Destination tensor. Data type supported: same as @p input.
-     * @param[in]      inner_border The number of zeros added to right and top edges of the input.
-     * @param[in]      info         Contains padding and policies to be used in the deconvolution.
+     * @param[in, out] input  Source tensor. Data type supported: QASYMM8/F16/F32.
+     * @param[out]     output Destination tensor. Data type supported: same as @p input.
+     * @param[in]      info   Contains padding and policies to be used in the deconvolution.
      */
-    void configure(ICLTensor *input, ICLTensor *output, const BorderSize &inner_border,
-                   const PadStrideInfo &info);
+    void configure(ICLTensor *input, ICLTensor *output, const PadStrideInfo &info);
     /** Static function to check if given info will lead to a valid configuration of @ref CLDeconvolutionLayerUpsample
      *
-     * @param[in] input        Source tensor info. Data type supported: QASYMM8/F16/F32.
-     * @param[in] output       Destination tensor info. Data type supported: same as @p input.
-     * @param[in] inner_border The number of zeros added to right and top edges of the input.
-     * @param[in] info         Contains padding and policies to be used in the deconvolution.
+     * @param[in] input  Source tensor info. Data type supported: QASYMM8/F16/F32.
+     * @param[in] output Destination tensor info. Data type supported: same as @p input.
+     * @param[in] info   Contains padding and policies to be used in the deconvolution.
      *
      * @return a status
      */
-    static Status validate(const ITensorInfo *input, const ITensorInfo *output, const BorderSize &inner_border,
-                           const PadStrideInfo &info);
+    static Status validate(const ITensorInfo *input, const ITensorInfo *output, const PadStrideInfo &info);
 
     // Inherited methods overridden:
     void run() override;
 
 private:
     CLDeconvolutionLayerUpsampleKernel _upsample;
+    CLMemsetKernel                     _memset;
     ICLTensor                         *_output;
 };
-}
+} // namespace arm_compute
 #endif /* __ARM_COMPUTE_CLDECONVOLUTIONLAYERUPSAMPLE_H__ */

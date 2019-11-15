@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 ARM Limited.
+ * Copyright (c) 2018-2019 ARM Limited.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,6 @@
 #include "arm_compute/core/CL/kernels/CLWinogradFilterTransformKernel.h"
 #include "arm_compute/core/CL/kernels/CLWinogradOutputTransformKernel.h"
 #include "arm_compute/core/Types.h"
-#include "arm_compute/runtime/CL/functions/CLActivationLayer.h"
 #include "arm_compute/runtime/CL/functions/CLGEMM.h"
 #include "arm_compute/runtime/CL/functions/CLWinogradInputTransform.h"
 #include "arm_compute/runtime/IFunction.h"
@@ -59,7 +58,7 @@ public:
     CLWinogradConvolutionLayer &operator=(CLWinogradConvolutionLayer &&) = default;
     /** Set the input and output tensors.
      *
-     * @note: This function only works with 3x3,3x1,1x3,5x5,5x1 and 1x5 kernels along with unit strides for both NCHW and NHWC data layout
+     * @note: This function only works with 3x3,3x1,1x3,5x5,5x1,1x5,7x1 and 1x7 kernels along with unit strides for both NCHW and NHWC data layout
      * @note  Some Winograd configurations (i.e. F(4x4, 5x5)) are supported only with enable_fast_math = true
      *
      * @param[in]  input            Source tensor. 3 lower dimensions represent a single input [width, height, IFM],

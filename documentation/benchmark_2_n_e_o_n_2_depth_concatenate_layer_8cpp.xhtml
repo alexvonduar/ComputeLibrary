@@ -40,7 +40,7 @@
   <img alt="Compute Library" src="https://raw.githubusercontent.com/ARM-software/ComputeLibrary/gh-pages/ACL_logo.png" style="max-width: 100%;margin-top: 15px;margin-left: 10px"/>
   <td style="padding-left: 0.5em;">
    <div id="projectname">
-   &#160;<span id="projectnumber">19.02</span>
+   &#160;<span id="projectnumber">19.08</span>
    </div>
   </td>
  </tr>
@@ -106,7 +106,7 @@ $(document).ready(function(){initNavTree('benchmark_2_n_e_o_n_2_depth_concatenat
 <div class="contents">
 <div class="textblock"><code>#include &quot;<a class="el" href="_tensor_shape_8h_source.xhtml">arm_compute/core/TensorShape.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="arm__compute_2core_2_types_8h_source.xhtml">arm_compute/core/Types.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="_n_e_depth_concatenate_layer_8h_source.xhtml">arm_compute/runtime/NEON/functions/NEDepthConcatenateLayer.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="_n_e_concatenate_layer_8h_source.xhtml">arm_compute/runtime/NEON/functions/NEConcatenateLayer.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="runtime_2_tensor_8h_source.xhtml">arm_compute/runtime/Tensor.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="_tensor_allocator_8h_source.xhtml">arm_compute/runtime/TensorAllocator.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="_accessor_8h_source.xhtml">tests/NEON/Accessor.h</a>&quot;</code><br />
@@ -130,15 +130,15 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ac1621ae0b84d28f536bf10b0b8667ea7"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacearm__compute_1_1test_1_1benchmark.xhtml#ac1621ae0b84d28f536bf10b0b8667ea7">NEDepthConcatenateLayerFixture</a> = DepthConcatenateLayerFixture&lt; Tensor, ITensor, NEDepthConcatenateLayer, Accessor &gt;</td></tr>
-<tr class="separator:ac1621ae0b84d28f536bf10b0b8667ea7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba5569bf9876eaba83a624e016f112cb"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacearm__compute_1_1test_1_1benchmark.xhtml#aba5569bf9876eaba83a624e016f112cb">NEDepthConcatenateLayerFixture</a> = DepthConcatenateLayerFixture&lt; Tensor, ITensor, NEConcatenateLayer, Accessor &gt;</td></tr>
+<tr class="separator:aba5569bf9876eaba83a624e016f112cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a59af54856391ed6a9ecc6d3a64551a06"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacearm__compute_1_1test_1_1benchmark.xhtml#a59af54856391ed6a9ecc6d3a64551a06">REGISTER_FIXTURE_DATA_TEST_CASE</a> (RunSmall, NEDepthConcatenateLayerFixture, framework::DatasetMode::PRECOMMIT, framework::dataset::combine(datasets::Small2DShapes(), data_types))</td></tr>
-<tr class="separator:a59af54856391ed6a9ecc6d3a64551a06"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad943d9452638fb102706db92112d5f75"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacearm__compute_1_1test_1_1benchmark.xhtml#ad943d9452638fb102706db92112d5f75">REGISTER_FIXTURE_DATA_TEST_CASE</a> (RunLarge, NEDepthConcatenateLayerFixture, framework::DatasetMode::NIGHTLY, framework::dataset::combine(datasets::DepthConcatenateLayerShapes(), data_types))</td></tr>
-<tr class="separator:ad943d9452638fb102706db92112d5f75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab287ad2324d4647a052a9ddcc653e372"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacearm__compute_1_1test_1_1benchmark.xhtml#ab287ad2324d4647a052a9ddcc653e372">REGISTER_FIXTURE_DATA_TEST_CASE</a> (RunSmall, NEDepthConcatenateLayerFixture, framework::DatasetMode::PRECOMMIT, framework::dataset::combine(datasets::Small3DShapes(), data_types))</td></tr>
+<tr class="separator:ab287ad2324d4647a052a9ddcc653e372"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a645fb0a5cdd1bdd921af63c7d534374a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacearm__compute_1_1test_1_1benchmark.xhtml#a645fb0a5cdd1bdd921af63c7d534374a">REGISTER_FIXTURE_DATA_TEST_CASE</a> (RunLarge, NEDepthConcatenateLayerFixture, framework::DatasetMode::NIGHTLY, framework::dataset::combine(datasets::ConcatenateLayerShapes(), data_types))</td></tr>
+<tr class="separator:a645fb0a5cdd1bdd921af63c7d534374a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -146,7 +146,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_59425e443f801f1f2fd8bbe4959a3ccf.xhtml">tests</a></li><li class="navelem"><a class="el" href="dir_4f2df8950dc650bf7cf9176fae02facc.xhtml">benchmark</a></li><li class="navelem"><a class="el" href="dir_ec05701f68bea22653d08da5856c9ffc.xhtml">NEON</a></li><li class="navelem"><a class="el" href="benchmark_2_n_e_o_n_2_depth_concatenate_layer_8cpp.xhtml">DepthConcatenateLayer.cpp</a></li>
-    <li class="footer">Generated on Thu Feb 28 2019 12:24:57 for Compute Library by
+    <li class="footer">Generated on Mon Sep 2 2019 11:47:30 for Compute Library by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.15 </li>
   </ul>
